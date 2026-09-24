@@ -1,297 +1,111 @@
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const $ = s => document.querySelector(s);
-const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-const now = () => new Date().toISOString();
-const demo = !(SUPABASE_URL && SUPABASE_ANON_KEY);
-
-const defaultState = {
-  family:{id:"demo-family",name:"Unsere Lernwelt",stars:145,crystals:18,parentPin:"2468"},
-  children:[
-    {id:"c1",name:"Kind 1",theme:"zauberwald",stars:92,crystals:11},
-    {id:"c2",name:"Kind 2",theme:"sternennacht",stars:53,crystals:7}
-  ],
-  subjects:[
-    {id:"de",name:"Deutsch",icon:"📖",color:"de",enabled:true},
-    {id:"ma",name:"Mathematik",icon:"➕",color:"ma",enabled:false},
-    {id:"en",name:"Englisch",icon:"🌙",color:"en",enabled:false},
-    {id:"su",name:"Sachunterricht",icon:"🌍",color:"su",enabled:false}
-  ],
-  sets:[
-    {id:"s1",childId:"c1",subjectId:"de",title:"Lernwörter – Beispiel",due:null,active:true,
-      items:["Fahrrad","plötzlich","Frühling","Straße","erzählen","wohnen","Zähne","fahren"].map((text,i)=>({id:"w"+i,text,mastery: i<2?72:i<5?42:18,seen:0,correct:0,wrong:0,last:null}))}
-  ],
-  rewards:[
-    {id:"r1",title:"Film aussuchen",cost:100,active:true},
-    {id:"r2",title:"Spieleabend bestimmen",cost:180,active:true}
-  ],
-  collection:[
-    {id:"mossbunny",name:"Mooshase",icon:"🐇",unlocked:true,rarity:"gewöhnlich"},
-    {id:"mooncat",name:"Mondkatze",icon:"🐈‍⬛",unlocked:true,rarity:"selten"},
-    {id:"cloudfox",name:"Wolkenfuchs",icon:"🦊",unlocked:false,rarity:"selten"},
-    {id:"stardragon",name:"Sternendrache",icon:"🐉",unlocked:false,rarity:"legendär"},
-    {id:"crystalstag",name:"Kristallhirsch",icon:"🦌",unlocked:false,rarity:"episch"},
-    {id:"forestspirit",name:"Waldgeist",icon:"🌱",unlocked:false,rarity:"selten"}
-  ],
-  world:{level:2,house:"Baumhaus",decor:["Kristallbeet"],unlockedAreas:["Lichtung","Zauberbaum"]},
-  history:[]
+const $=s=>document.querySelector(s), uid=()=>crypto.randomUUID(), now=()=>new Date().toISOString();
+const demo=!(SUPABASE_URL&&SUPABASE_ANON_KEY);
+const defaultState={
+ family:{name:"Unsere Lernwelt"},
+ children:[],
+ subjects:[{id:"de",name:"Deutsch",icon:"📖",enabled:true},{id:"ma",name:"Mathematik",icon:"➕",enabled:false},{id:"en",name:"Englisch",icon:"🌙",enabled:false},{id:"su",name:"Sachunterricht",icon:"🌍",enabled:false}],
+ sets:[],rewards:[],
+ collection:[
+ {id:"mooncat",name:"Mondkatze",icon:"🐈‍⬛",type:"Tier",rarity:"selten",unlocked:true},
+ {id:"mossbunny",name:"Mooshase",icon:"🐇",type:"Tier",rarity:"gewöhnlich",unlocked:true},
+ {id:"cloudfox",name:"Wolkenfuchs",icon:"🦊",type:"Tier",rarity:"selten"},
+ {id:"stardragon",name:"Sternendrache",icon:"🐉",type:"Drache",rarity:"legendär"},
+ {id:"emberdragon",name:"Glutdrache",icon:"🐲",type:"Drache",rarity:"episch"},
+ {id:"crystalstag",name:"Kristallhirsch",icon:"🦌",type:"Tier",rarity:"episch"},
+ {id:"flowerfairy",name:"Blütenfee",icon:"🧚",type:"Fee",rarity:"selten"},
+ {id:"moonfairy",name:"Mondfee",icon:"🧚‍♀️",type:"Fee",rarity:"episch"},
+ {id:"forestelf",name:"Waldelf",icon:"🧝",type:"Elf",rarity:"selten"},
+ {id:"starelf",name:"Sternenelfe",icon:"🧝‍♀️",type:"Elf",rarity:"episch"},
+ {id:"pumpkin",name:"Kürbisgeist",icon:"🎃",type:"Herbstwesen",rarity:"gewöhnlich"},
+ {id:"ghost",name:"Laternengeist",icon:"👻",type:"Geist",rarity:"selten"},
+ {id:"forestspirit",name:"Waldgeist",icon:"🌱",type:"Geist",rarity:"selten"},
+ {id:"owl",name:"Runeneule",icon:"🦉",type:"Tier",rarity:"gewöhnlich"},
+ {id:"unicorn",name:"Nebel-Einhorn",icon:"🦄",type:"Fabelwesen",rarity:"legendär"}
+ ],
+ catalog:[
+ {id:"lights",cat:"Außen",name:"Glühwürmchen-Lichter",icon:"✨",cost:5},
+ {id:"crystals",cat:"Garten",name:"Kristallbeet",icon:"💎",cost:7},
+ {id:"flowers",cat:"Garten",name:"Mondblumen",icon:"🌸",cost:5},
+ {id:"pond",cat:"Garten",name:"Feenteich",icon:"🪷",cost:12},
+ {id:"bench",cat:"Garten",name:"Wald-Bank",icon:"🪑",cost:7},
+ {id:"pumpkins",cat:"Saisonal",name:"Leuchtkürbisse",icon:"🎃",cost:8},
+ {id:"lanterns",cat:"Außen",name:"Zauberlaternen",icon:"🏮",cost:8},
+ {id:"bridge",cat:"Garten",name:"Kleine Holzbrücke",icon:"🌉",cost:14},
+ {id:"rug",cat:"Wohnraum",name:"Sternenteppich",icon:"🧶",cost:6},
+ {id:"books",cat:"Wohnraum",name:"Zauberbücher",icon:"📚",cost:6},
+ {id:"sofa",cat:"Wohnraum",name:"Wolkensofa",icon:"🛋️",cost:12},
+ {id:"fireplace",cat:"Wohnraum",name:"Kristallkamin",icon:"🔥",cost:15},
+ {id:"bed",cat:"Wohnraum",name:"Mondbett",icon:"🛏️",cost:15},
+ {id:"table",cat:"Wohnraum",name:"Elfen-Tisch",icon:"🪵",cost:9},
+ {id:"stars",cat:"Haus",name:"Sternendach",icon:"🌟",cost:18},
+ {id:"window",cat:"Haus",name:"Mondfenster",icon:"🪟",cost:10},
+ {id:"door",cat:"Haus",name:"Runentür",icon:"🚪",cost:10},
+ {id:"mushroom",cat:"Garten",name:"Pilzring",icon:"🍄",cost:9},
+ {id:"fountain",cat:"Garten",name:"Mondbrunnen",icon:"⛲",cost:16},
+ {id:"snow",cat:"Saisonal",name:"Winterzauber",icon:"❄️",cost:10}
+ ],
+ world:{level:2,owned:["lights"],active:["lights"],area:"Lichtung"},history:[]
 };
-
-let state = JSON.parse(localStorage.getItem("mlw-state") || "null") || structuredClone(defaultState);
-let route = "home";
-let currentChild = state.children[0]?.id;
-let session = null;
-let supabase = null;
-
-function save(){ localStorage.setItem("mlw-state",JSON.stringify(state)); }
-function esc(s=""){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-function masteryLabel(n){return n>=80?"🟢 sicher":n>=45?"🟡 üben":"🔴 neu/unsicher"}
-function child(){return state.children.find(c=>c.id===currentChild)||state.children[0]}
-function setsForChild(){return state.sets.filter(s=>s.childId===currentChild)}
-
-async function initSupabase(){
-  if(demo) return;
-  try{
-    const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
-    supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-    const {data}=await supabase.auth.getSession(); session=data.session;
-    if(session) await pullCloud();
-  }catch(e){ console.warn("Cloud nicht verfügbar, lokaler Modus:",e); }
+let state=JSON.parse(localStorage.getItem("mlw-v2")||"null")||structuredClone(defaultState);
+let route="home", currentChild=state.children[0]?.id||null, supabase=null, session=null, syncTimer=null, catalogCat="Alle";
+const esc=(s="")=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const child=()=>state.children.find(x=>x.id===currentChild);
+const sets=()=>state.sets.filter(x=>x.childId===currentChild);
+function saveLocal(){localStorage.setItem("mlw-v2",JSON.stringify(state))}
+function scheduleSync(){saveLocal();clearTimeout(syncTimer);syncTimer=setTimeout(pushCloud,500)}
+async function initCloud(){
+ if(demo)return;
+ try{const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const r=await supabase.auth.getSession();session=r.data.session;if(session)await pullCloud()}catch(e){console.warn(e)}
 }
-
-async function pullCloud(){
-  if(!supabase||!session) return;
-  const {data,error}=await supabase.from("app_state").select("payload").eq("user_id",session.user.id).maybeSingle();
-  if(!error && data?.payload){state=data.payload; save();}
-}
-async function pushCloud(){
-  save();
-  if(!supabase||!session) return;
-  await supabase.from("app_state").upsert({user_id:session.user.id,payload:state,updated_at:now()},{onConflict:"user_id"});
-}
-
-function layout(content){
-  return `<div class="shell">
-    <header class="topbar">
-      <div class="brand"><div class="brand-mark">✦</div><div>Magische Lernwelt<br><span class="small">${demo?"Demo · lokal":"Cloud · synchronisiert"}</span></div></div>
-      <nav class="nav">
-        ${[["home","Start"],["learn","Lernen"],["world","Zauberwelt"],["parent","Eltern"]].map(([r,n])=>`<button data-route="${r}" class="${route===r?"active":""}">${n}</button>`).join("")}
-      </nav>
-    </header>
-    ${content}
-  </div>`;
-}
-
+async function pullCloud(){if(!supabase||!session)return;const r=await supabase.from("app_state").select("payload").eq("user_id",session.user.id).maybeSingle();if(r.data?.payload){state=r.data.payload;currentChild=state.children[0]?.id||null;saveLocal()}}
+async function pushCloud(){if(!supabase||!session)return;await supabase.from("app_state").upsert({user_id:session.user.id,payload:state,updated_at:now()},{onConflict:"user_id"})}
+function shell(body){return `<div class="shell"><header class="top"><div class="brand"><div class="logo">✦</div><div>Magische Lernwelt<div class="small">${session?"Cloud · automatisch synchronisiert":demo?"Lokal":"Cloud · Anmeldung erforderlich"}</div></div></div><nav>${[["home","Start"],["learn","Lernen"],["world","Zauberwelt"],["parent","Eltern"]].map(([r,n])=>`<button data-route="${r}" class="${route===r?"active":""}">${n}</button>`).join("")}</nav></header>${body}</div>`}
 function render(){
-  let content="";
-  if(route==="home") content=home();
-  if(route==="learn") content=learnHome();
-  if(route==="world") content=world();
-  if(route==="parent") content=parent();
-  $("#app").innerHTML=layout(content);
-  bindCommon();
+ let b=route==="home"?home():route==="learn"?learnHome():route==="world"?world():parent();
+ $("#app").innerHTML=shell(b);bind();
 }
-function bindCommon(){
-  document.querySelectorAll("[data-route]").forEach(b=>b.onclick=()=>{route=b.dataset.route;render()});
-  document.querySelectorAll("[data-child]").forEach(b=>b.onclick=()=>{currentChild=b.dataset.child;render()});
+function profileBar(){return state.children.length?`<div class="row">${state.children.map(c=>`<button class="pill" data-child="${c.id}">${c.id===currentChild?"✓ ":""}${esc(c.name)}</button>`).join("")}</div>`:`<div class="card"><b>Noch kein Kinderprofil.</b><div class="small">Im Elternbereich kannst du das erste Profil anlegen.</div></div>`}
+function home(){let c=child();return `<main class="page"><section class="hero"><span class="tag">✦ Persönliche Lernreise</span><h1>Willkommen in deiner<br>magischen Lernwelt.</h1><p class="muted">Lernen bleibt übersichtlich. Die Fantasiewelt wartet erst nach der Lerneinheit.</p>${profileBar()}</section><section class="grid"><div class="card"><div class="small">Lernlisten</div><h2>${sets().length}</h2></div><div class="card"><div class="small">Sterne</div><h2>⭐ ${c?.stars||0}</h2></div><div class="card"><div class="small">Kristalle</div><h2>💎 ${c?.crystals||0}</h2></div><div class="card"><div class="small">Entdeckt</div><h2>${state.collection.filter(x=>x.unlocked).length}/${state.collection.length}</h2></div></section><section class="grid">${state.subjects.map(s=>`<div class="card"><div style="font-size:34px">${s.icon}</div><h2>${s.name}</h2><span class="tag">${s.enabled?"aktiv":"später erweiterbar"}</span></div>`).join("")}</section></main>`}
+function learnHome(){return `<main class="page"><section class="hero"><span class="tag">Ruhiger Lernmodus</span><h1>Was möchtest du üben?</h1><p class="muted">Keine Sammelfiguren während der Aufgaben. Farbe dient nur der Orientierung.</p>${profileBar()}</section><section class="grid">${sets().map(s=>{let a=Math.round(s.items.reduce((n,x)=>n+x.mastery,0)/Math.max(1,s.items.length));return `<div class="card"><h2>${esc(s.title)}</h2><div class="progress"><i style="width:${a}%"></i></div><p class="small">${s.items.length} Wörter · ${a}%</p><button class="btn" data-start="${s.id}">Starten</button></div>`}).join("")||`<div class="card">Noch keine Lernliste vorhanden.</div>`}</section></main>`}
+function pick(set){return [...set.items].map(it=>({it,score:100-it.mastery+(it.wrong||0)*5+Math.random()*8})).sort((a,b)=>b.score-a.score)[0]?.it}
+function mode(it){let m=it.mastery||0;return m<30?["recognize","scramble"][Math.floor(Math.random()*2)]:m<60?["gap","scramble","recognize"][Math.floor(Math.random()*3)]:["memory","type","gap"][Math.floor(Math.random()*3)]}
+function scramble(w){return [...w].sort(()=>Math.random()-.5).join(" · ")} function gap(w){return [...w].map((c,i)=>i>0&&i<w.length-1&&i%3===1?"_":c).join(" ")}
+function distract(w){let a=w.length>3?w.slice(0,2)+w.slice(3):w+"h",b=w.length>4?w.slice(0,-2)+w.at(-1)+w.at(-2):w+"e";return [...new Set([w,a,b])].sort(()=>Math.random()-.5)}
+function startLearning(id){let set=state.sets.find(x=>x.id===id),n=0,earned=0,total=12,it,m;function draw(){it=pick(set);m=mode(it);$("#app").innerHTML=`<div class="learn"><div class="learnbox"><div class="row between"><span class="tag">📖 Deutsch</span><span class="small">${n+1}/${total}</span></div><div class="progress"><i style="width:${n/total*100}%"></i></div><div id="ex"></div><div class="feedback" id="fb"></div><div class="row between"><button class="btn light" id="quit">Beenden</button><span>⭐ +${earned}</span></div></div></div>`;$("#quit").onclick=()=>{route="learn";render()};exercise()}
+ function exercise(){let e=$("#ex"),w=it.text;if(m==="recognize"){e.innerHTML=`<p class="small">Welches Wort ist richtig?</p><div class="choices">${distract(w).map(x=>`<button data-a="${esc(x)}">${esc(x)}</button>`).join("")}</div>`;e.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>ans(b.dataset.a===w))}
+ else if(m==="scramble"){e.innerHTML=`<p class="small">Bringe die Buchstaben in die richtige Reihenfolge.</p><div class="word">${esc(scramble(w))}</div>${input()}`}
+ else if(m==="gap"){e.innerHTML=`<p class="small">Ergänze das Wort.</p><div class="word">${esc(gap(w))}</div>${input()}`}
+ else if(m==="memory"){e.innerHTML=`<p class="small">Merke dir das Wort.</p><div class="word" id="mem">${esc(w)}</div><div class="field"><input id="answer" disabled placeholder="Danach schreiben"></div><button class="btn" id="check" disabled>Prüfen</button>`;setTimeout(()=>{if(!$("#mem"))return;$("#mem").textContent="✦ ✦ ✦";$("#answer").disabled=false;$("#check").disabled=false;$("#check").onclick=check},2200)}
+ else e.innerHTML=`<p class="small">Schreibe das Wort selbst.</p>${input()}`}
+ function input(){setTimeout(()=>{$("#check")&&( $("#check").onclick=check)},0);return `<div class="field"><input id="answer" autocomplete="off" placeholder="Wort schreiben"></div><button class="btn" id="check">Prüfen</button>`}
+ function check(){ans($("#answer").value.trim().toLocaleLowerCase("de")===w.toLocaleLowerCase("de"))}
+ function ans(ok){it.seen=(it.seen||0)+1;it.last=now();if(ok){it.correct=(it.correct||0)+1;it.mastery=Math.min(100,(it.mastery||0)+9);earned+=2;$("#fb").textContent="✦ Richtig"}else{it.wrong=(it.wrong||0)+1;it.mastery=Math.max(0,(it.mastery||0)-7);$("#fb").textContent="Richtig ist: "+it.text}state.history.push({childId:currentChild,itemId:it.id,mode:m,ok,at:now()});scheduleSync();n++;setTimeout(()=>n>=total?finish():draw(),800)}
+ function finish(){let c=child();c.stars=(c.stars||0)+earned;let gems=Math.max(1,Math.floor(earned/8));c.crystals=(c.crystals||0)+gems;let locked=state.collection.filter(x=>!x.unlocked),found=null;if(locked.length&&Math.random()<.32){found=locked[Math.floor(Math.random()*locked.length)];found.unlocked=true}scheduleSync();$("#app").innerHTML=`<div class="learn"><div class="learnbox" style="text-align:center"><h1>Geschafft.</h1><p>⭐ +${earned} &nbsp; 💎 +${gems}</p>${found?`<div class="card"><div style="font-size:60px">${found.icon}</div><b>Neu entdeckt: ${found.name}</b></div>`:""}<br><button class="btn" id="world">Zur Zauberwelt</button></div></div>`;$("#world").onclick=()=>{route="world";render()}}draw()}
+function world(){let c=child(),cats=["Alle",...new Set(state.catalog.map(x=>x.cat))];return `<main class="page"><section class="hero"><span class="tag">Die Welt wächst mit dir</span><h1>Magische Lichtung</h1><p class="muted">Bewohner, Dekorationen und neue Orte werden außerhalb des Lernmodus gesammelt und gestaltet.</p>${profileBar()}</section>
+<section class="worldHero" style="margin-top:20px"><div class="mountain"></div><div class="mountain m2"></div><div class="mist"></div><div class="ground"></div><div class="worldLabel">🌿 ${state.world.area}</div><div class="worldStats">⭐ ${c?.stars||0} &nbsp; 💎 ${c?.crystals||0}</div><div class="bigTree"><div class="trunk"></div><div class="branch b1"></div><div class="branch b2"></div><div class="crown c1"></div><div class="crown c2"></div><div class="crown c3"></div><div class="treehouse"></div><div class="door"></div><i class="lantern" style="left:100px;top:250px"></i><i class="lantern" style="right:85px;top:220px"></i></div></section>
+<section class="card" style="margin-top:20px"><h2>🪄 Gestalten</h2><p class="small">Katalog für Wohnraum, Haus, Garten, Außenbereich und saisonale Dekoration.</p><div class="catalogTabs">${cats.map(x=>`<button class="pill ${x===catalogCat?"active":""}" data-cat="${x}">${x}</button>`).join("")}</div><div class="catalog">${state.catalog.filter(x=>catalogCat==="Alle"||x.cat===catalogCat).map(x=>`<div class="item ${state.world.owned.includes(x.id)?"owned":""}"><div><div class="itemIcon">${x.icon}</div><b>${x.name}</b><div class="small">${x.cat}</div></div><button class="btn ${state.world.owned.includes(x.id)?"light":""}" data-buy="${x.id}">${state.world.owned.includes(x.id)?"Besitzt du":"💎 "+x.cost}</button></div>`).join("")}</div></section>
+<section class="card" style="margin-top:20px"><h2>✨ Magische Sammlung</h2><p class="small">Eigene Fantasiewesen in einer märchenhaften Welt: Tiere, Drachen, Elfen, Feen, Geister und saisonale Wesen.</p><div class="collection">${state.collection.map(x=>`<div class="being ${x.unlocked?"":"locked"}"><div class="ico">${x.unlocked?x.icon:"❔"}</div><b>${x.unlocked?x.name:"Unentdeckt"}</b><div class="rarity">${x.unlocked?x.type+" · "+x.rarity:"weiterlernen"}</div></div>`).join("")}</div></section></main>`}
+function parent(){let c=child();return `<main class="page"><section class="hero"><span class="tag">Elternbereich</span><h1>Verwalten & Überblick</h1><p class="muted">Profile, Lernwörter, Belohnungen und Lernstand. Änderungen werden automatisch synchronisiert.</p></section><section class="grid">
+<div class="card"><h2>Kinderprofile</h2>${state.children.map(x=>`<div class="row between" style="margin:8px 0"><button class="pill" data-child="${x.id}">${x.id===currentChild?"✓ ":""}${esc(x.name)}</button><button class="btn light" data-delete-child="${x.id}">Löschen</button></div>`).join("")}<button class="btn light" id="addChild">+ Profil</button></div>
+<div class="card"><h2>Lernliste anlegen</h2><div class="field"><input id="title" placeholder="z. B. Ansage Woche 40"></div><div class="field"><textarea id="words" rows="6" placeholder="Ein Wort pro Zeile"></textarea></div><button class="btn" id="addSet">Speichern</button></div>
+<div class="card"><h2>Belohnungen</h2>${state.rewards.map(r=>`<div class="row between"><span>${esc(r.title)} · ⭐ ${r.cost}</span><button class="btn light" data-redeem="${r.id}">Einlösen</button></div>`).join("<hr>")}<div class="field"><input id="reward" placeholder="z. B. Film aussuchen"></div><div class="field"><input id="cost" type="number" value="100" min="1"></div><button class="btn light" id="addReward">+ Belohnung</button></div>
+<div class="card"><h2>Cloud-Konto</h2>${cloud()}</div></section>
+<h2 style="margin-top:28px">${c?esc(c.name)+" · Lernstand":"Noch kein Profil"}</h2><section class="grid">${sets().map(s=>`<div class="card"><div class="row between"><h3>${esc(s.title)}</h3><button class="btn light" data-delete-set="${s.id}">Liste löschen</button></div>${s.items.map(i=>`<div style="margin:10px 0"><div class="row between"><b>${esc(i.text)}</b><span class="small">${Math.round(i.mastery)}%</span></div><div class="progress"><i style="width:${i.mastery}%"></i></div></div>`).join("")}</div>`).join("")}</section></main>`}
+function cloud(){if(demo)return `<p class="small">Lokaler Modus.</p>`;if(session)return `<span class="tag">✓ ${esc(session.user.email||"angemeldet")}</span><p class="small">Änderungen werden automatisch im Hintergrund gespeichert.</p><button class="btn light" id="logout">Abmelden</button>`;return `<div class="field"><input id="email" type="email" placeholder="E-Mail"></div><div class="field"><input id="pw" type="password" placeholder="Passwort"></div><div class="row"><button class="btn" id="login">Anmelden</button><button class="btn light" id="signup">Konto erstellen</button></div>`}
+function bind(){
+ document.querySelectorAll("[data-route]").forEach(b=>b.onclick=()=>{route=b.dataset.route;render()});document.querySelectorAll("[data-child]").forEach(b=>b.onclick=()=>{currentChild=b.dataset.child;render()});
+ document.querySelectorAll("[data-start]").forEach(b=>b.onclick=()=>startLearning(b.dataset.start));
+ document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{catalogCat=b.dataset.cat;render()});
+ document.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>{let x=state.catalog.find(i=>i.id===b.dataset.buy),c=child();if(!c)return alert("Bitte zuerst Kinderprofil wählen.");if(state.world.owned.includes(x.id))return;if((c.crystals||0)<x.cost)return alert("Noch nicht genug Kristalle.");c.crystals-=x.cost;state.world.owned.push(x.id);state.world.active.push(x.id);scheduleSync();render()});
+ $("#addChild")?.addEventListener("click",()=>{let n=prompt("Name des Kinderprofils:");if(n?.trim()){let x={id:uid(),name:n.trim(),stars:0,crystals:0};state.children.push(x);currentChild=x.id;scheduleSync();render()}});
+ document.querySelectorAll("[data-delete-child]").forEach(b=>b.onclick=()=>{let x=state.children.find(c=>c.id===b.dataset.deleteChild);if(confirm(`Profil "${x.name}" und seine Lernlisten wirklich löschen?`)){state.children=state.children.filter(c=>c.id!==x.id);state.sets=state.sets.filter(s=>s.childId!==x.id);currentChild=state.children[0]?.id||null;scheduleSync();render()}});
+ $("#addSet")?.addEventListener("click",()=>{if(!currentChild)return alert("Bitte zuerst ein Kinderprofil anlegen.");let title=$("#title").value.trim(),words=[...new Set($("#words").value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean))];if(!title||!words.length)return alert("Titel und Lernwörter eingeben.");state.sets.push({id:uid(),childId:currentChild,subjectId:"de",title,items:words.map(text=>({id:uid(),text,mastery:10,seen:0,correct:0,wrong:0,last:null}))});scheduleSync();render()});
+ document.querySelectorAll("[data-delete-set]").forEach(b=>b.onclick=()=>{if(confirm("Diese Lernliste löschen?")){state.sets=state.sets.filter(s=>s.id!==b.dataset.deleteSet);scheduleSync();render()}});
+ $("#addReward")?.addEventListener("click",()=>{let t=$("#reward").value.trim(),cost=Number($("#cost").value);if(t&&cost>0){state.rewards.push({id:uid(),title:t,cost});scheduleSync();render()}});
+ document.querySelectorAll("[data-redeem]").forEach(b=>b.onclick=()=>{let r=state.rewards.find(x=>x.id===b.dataset.redeem),c=child();if(!c)return;if(c.stars<r.cost)return alert("Noch nicht genug Sterne.");if(confirm(`${r.title} einlösen?`)){c.stars-=r.cost;scheduleSync();render()}});
+ $("#logout")?.addEventListener("click",async()=>{await supabase.auth.signOut();session=null;render()});$("#login")?.addEventListener("click",()=>auth(false));$("#signup")?.addEventListener("click",()=>auth(true));
 }
-
-function home(){
-  const c=child();
-  return `<main class="page">
-    <section class="hero">
-      <div class="tag">✦ ${esc(c?.name||"Kind")}'s Lernreise</div>
-      <h1>Willkommen in deiner<br>magischen Lernwelt.</h1>
-      <p class="sub">Lernen bleibt ruhig und klar. Nach der Lerneinheit wachsen Lichtung, Sammlung und Zauberhaus weiter.</p>
-      <div class="row">
-        ${state.children.map(x=>`<button class="pill" data-child="${x.id}">${x.id===currentChild?"✓ ":""}${esc(x.name)}</button>`).join("")}
-      </div>
-    </section>
-    <section class="grid">
-      <div class="card"><div class="small">Heute verfügbar</div><div class="big-num">${setsForChild().filter(s=>s.active).length}</div><b>Lernlisten</b></div>
-      <div class="card"><div class="small">Gesammelt</div><div class="big-num">⭐ ${c?.stars||0}</div><b>Sterne</b></div>
-      <div class="card"><div class="small">Magische Energie</div><div class="big-num">💎 ${c?.crystals||0}</div><b>Kristalle</b></div>
-      <div class="card"><div class="small">Entdeckt</div><div class="big-num">${state.collection.filter(x=>x.unlocked).length}/${state.collection.length}</div><b>Wesen</b></div>
-    </section>
-    <section class="grid">
-      ${state.subjects.map(s=>`<article class="card click subject-${s.color}">
-        <div class="row between"><span style="font-size:34px">${s.icon}</span><span class="tag">${s.enabled?"aktiv":"vorbereitet"}</span></div>
-        <h2>${esc(s.name)}</h2><p class="small">${s.id==="de"?"Lernwörter, Rechtschreibung und adaptive Wiederholung":s.enabled?"Bereit":"Kann später als Modul ergänzt werden"}</p>
-      </article>`).join("")}
-    </section>
-  </main>`;
-}
-
-function learnHome(){
-  const sets=setsForChild();
-  return `<main class="page">
-    <section class="hero"><div class="tag">Ruhiger Lernmodus</div><h1>Was möchtest du üben?</h1><p class="sub">Keine Sammelwesen während der Aufgaben. Farbe, große Schrift und dezente Magie unterstützen die Orientierung.</p></section>
-    <section class="grid">${sets.length?sets.map(s=>{
-      const avg=Math.round(s.items.reduce((a,x)=>a+x.mastery,0)/Math.max(1,s.items.length));
-      return `<article class="card subject-de"><div class="row between"><span class="tag">📖 Deutsch</span><span class="small">${s.items.length} Wörter</span></div><h2>${esc(s.title)}</h2><div class="progress"><i style="width:${avg}%"></i></div><p class="small">Gesamtfortschritt ${avg}%</p><button class="btn" data-start="${s.id}">Lerneinheit starten</button></article>`
-    }).join(""):`<div class="card">Noch keine Lernliste. Lege sie im Elternbereich an.</div>`}</section>
-  </main>`;
-}
-
-function selectAdaptiveItem(set){
-  // Niedrige Kompetenz + lange nicht gesehen + Fehler werden priorisiert.
-  const scored=set.items.map(it=>{
-    const recency=!it.last?25:Math.min(25,(Date.now()-new Date(it.last).getTime())/86400000*4);
-    const errorBias=(it.wrong||0)*4;
-    const noise=Math.random()*8;
-    return {it,score:(100-it.mastery)+recency+errorBias+noise};
-  }).sort((a,b)=>b.score-a.score);
-  return scored[0]?.it;
-}
-function modeFor(item){
-  const m=item.mastery||0;
-  if(m<25) return ["recognize","scramble"][Math.floor(Math.random()*2)];
-  if(m<50) return ["scramble","gap","recognize"][Math.floor(Math.random()*3)];
-  if(m<75) return ["memory","type","gap"][Math.floor(Math.random()*3)];
-  return ["type","memory"][Math.floor(Math.random()*2)];
-}
-function scramble(word){return [...word].sort(()=>Math.random()-.5).join(" · ")}
-function distractors(word){
-  let a=word;
-  if(word.length>3){let i=Math.max(1,Math.floor(word.length/2)); a=word.slice(0,i)+word.slice(i+1)}
-  let b=word.length>4?word.slice(0,-2)+word.at(-1)+word.at(-2):word+"h";
-  return [word,a,b].filter((v,i,x)=>v&&x.indexOf(v)===i).sort(()=>Math.random()-.5);
-}
-function gap(word){
-  return [...word].map((c,i)=>i>0&&i<word.length-1&&i%3===1?"_":c).join(" ");
-}
-function startSession(setId){
-  const set=state.sets.find(s=>s.id===setId); if(!set)return;
-  let count=0, earned=0, current=null, mode=null, memoryHidden=false;
-  const total=12;
-  function draw(){
-    current=selectAdaptiveItem(set); mode=modeFor(current); memoryHidden=false;
-    $("#app").innerHTML=`<div class="learn-shell"><section class="learn-card">
-      <div class="row between"><span class="tag">📖 Deutsch</span><span class="small">${count+1} von ${total}</span></div>
-      <div class="progress"><i style="width:${(count/total)*100}%"></i></div>
-      <div id="exercise"></div><div class="feedback" id="fb"></div>
-      <div class="row between"><button class="btn secondary" id="quit">Beenden</button><span class="small">⭐ +${earned}</span></div>
-    </section></div>`;
-    $("#quit").onclick=()=>{route="learn";render()};
-    drawExercise();
-  }
-  function drawExercise(){
-    const ex=$("#exercise"), w=current.text;
-    if(mode==="recognize"){
-      ex.innerHTML=`<p class="small">Welches Wort ist richtig?</p><div class="choice">${distractors(w).map(x=>`<button data-answer="${esc(x)}">${esc(x)}</button>`).join("")}</div>`;
-      ex.querySelectorAll("[data-answer]").forEach(b=>b.onclick=()=>answer(b.dataset.answer===w));
-    }else if(mode==="scramble"){
-      ex.innerHTML=`<p class="small">Setze das Wort im Kopf richtig zusammen.</p><div class="learn-word">${esc(scramble(w))}</div><div class="field"><input id="ans" autocomplete="off" placeholder="Wort eingeben"></div><button class="btn" id="check">Prüfen</button>`;
-      $("#check").onclick=()=>answer($("#ans").value.trim().toLocaleLowerCase("de")===w.toLocaleLowerCase("de"));
-    }else if(mode==="gap"){
-      ex.innerHTML=`<p class="small">Welche Buchstaben fehlen?</p><div class="learn-word">${esc(gap(w))}</div><div class="field"><input id="ans" autocomplete="off" placeholder="Ganzes Wort schreiben"></div><button class="btn" id="check">Prüfen</button>`;
-      $("#check").onclick=()=>answer($("#ans").value.trim().toLocaleLowerCase("de")===w.toLocaleLowerCase("de"));
-    }else if(mode==="memory"){
-      ex.innerHTML=`<p class="small">Merke dir das Wort. Es verschwindet gleich.</p><div class="learn-word" id="memory">${esc(w)}</div><div class="field"><input id="ans" autocomplete="off" placeholder="Danach hier schreiben" disabled></div><button class="btn" id="check" disabled>Prüfen</button>`;
-      setTimeout(()=>{if(!$("#memory"))return; $("#memory").textContent="✦ ✦ ✦"; $("#ans").disabled=false; $("#check").disabled=false; $("#ans").focus(); $("#check").onclick=()=>answer($("#ans").value.trim().toLocaleLowerCase("de")===w.toLocaleLowerCase("de"));},2200);
-    }else{
-      ex.innerHTML=`<p class="small">Schreibe das Lernwort selbst.</p><div class="notice">Tipp: Sprich das Wort leise in Silben. Für die spätere Version kann hier zusätzlich Audio hinterlegt werden.</div><div class="field"><input id="ans" autocomplete="off" placeholder="Wort schreiben"></div><button class="btn" id="check">Prüfen</button>`;
-      $("#check").onclick=()=>answer($("#ans").value.trim().toLocaleLowerCase("de")===w.toLocaleLowerCase("de"));
-    }
-  }
-  function answer(ok){
-    current.seen=(current.seen||0)+1; current.last=now();
-    if(ok){current.correct=(current.correct||0)+1; current.mastery=Math.min(100,(current.mastery||0)+Math.max(5,12-current.mastery/12)); earned+=2; $("#fb").innerHTML=`<span class="spark">✦ Richtig – +2 Sterne</span>`;}
-    else{current.wrong=(current.wrong||0)+1; current.mastery=Math.max(0,(current.mastery||0)-7); $("#fb").textContent=`Fast. Richtig ist: ${current.text}`;}
-    state.history.push({id:uid(),childId:currentChild,setId:set.id,itemId:current.id,mode,ok,at:now()});
-    count++; save();
-    setTimeout(()=>{if(count>=total)finish();else draw()},850);
-  }
-  function finish(){
-    const c=child(); c.stars=(c.stars||0)+earned; c.crystals=(c.crystals||0)+Math.max(1,Math.floor(earned/8));
-    // kleine Sammelchance nach abgeschlossener Einheit
-    const locked=state.collection.filter(x=>!x.unlocked);
-    let found=null;
-    if(locked.length && Math.random()<.28){found=locked[Math.floor(Math.random()*locked.length)];found.unlocked=true}
-    pushCloud();
-    $("#app").innerHTML=`<div class="learn-shell"><section class="learn-card" style="text-align:center">
-      <div style="font-size:48px">✦</div><h1>Für heute geschafft.</h1><p>Du hast <b>${earned} Sterne</b> und <b>${Math.max(1,Math.floor(earned/8))} Kristall(e)</b> gesammelt.</p>
-      ${found?`<div class="notice">Etwas Magisches wurde entdeckt: <b>${found.icon} ${esc(found.name)}</b>!</div>`:""}
-      <div class="row" style="justify-content:center"><button class="btn" id="toWorld">Zur Zauberwelt</button><button class="btn secondary" id="toLearn">Noch eine Runde</button></div>
-    </section></div>`;
-    $("#toWorld").onclick=()=>{route="world";render()}; $("#toLearn").onclick=()=>{route="learn";render()};
-  }
-  draw();
-}
-
-function world(){
-  const c=child();
-  return `<main class="page">
-    <section class="hero"><div class="tag">⭐ ${c?.stars||0} &nbsp; 💎 ${c?.crystals||0}</div><h1>Die magische Lichtung</h1><p class="sub">Hier wird Lernen sichtbar: Die Welt wächst, neue Bereiche öffnen sich und Fantasiewesen werden entdeckt. Keine bekannten Figuren – nur eine eigene, märchenhafte Welt.</p></section>
-    <section style="margin-top:22px" class="world">
-      <div class="tree"><div class="trunk"></div><div class="crown c1"></div><div class="crown c2"></div><div class="crown c3"></div><div class="house"></div><div class="door"></div></div>
-      <div class="crystal" style="left:18%;bottom:70px"></div><div class="crystal" style="left:22%;bottom:58px;transform:scale(.7)"></div><div class="crystal" style="right:19%;bottom:85px;transform:scale(1.2)"></div>
-    </section>
-    <section class="grid">
-      <article class="card"><h2>Gebiete</h2><div class="row">${["Lichtung","Zauberbaum","Feengarten","Kristallhöhle","Sternwarte","Zauberbibliothek","Drachenberg"].map((x,i)=>`<span class="tag ${i>state.world.level?"locked":""}">${i<=state.world.level?"✦":"🔒"} ${x}</span>`).join("")}</div></article>
-      <article class="card"><h2>Gestalten</h2><p class="small">Mit Kristallen lassen sich später Baumhaus, Lichtung und Dekoration individuell verändern.</p><div class="row"><button class="btn secondary" data-build="Lichterkette">Lichterkette · 5 💎</button><button class="btn secondary" data-build="Kristallgarten">Kristallgarten · 8 💎</button></div></article>
-    </section>
-    <h2 style="margin-top:30px">Magische Sammlung</h2>
-    <section class="creature-shelf">${state.collection.map(x=>`<div class="creature ${x.unlocked?"":"locked"}"><div><div class="emoji">${x.unlocked?x.icon:"?"}</div><b>${x.unlocked?esc(x.name):"Unentdeckt"}</b><div class="small">${x.unlocked?x.rarity:"Weiterlernen zum Entdecken"}</div></div></div>`).join("")}</section>
-  </main>`;
-}
-
-function parent(){
-  const c=child();
-  return `<main class="page">
-    <section class="hero"><div class="tag">Elternbereich</div><h1>Lernen verwalten</h1><p class="sub">Lerninhalte vorgeben, Fortschritt prüfen, Belohnungen festlegen und die Plattform später um weitere Fächer erweitern.</p>
-      ${demo?`<div class="notice">Die App läuft gerade im lokalen Demo-Modus. Für Synchronisation zwischen Geräten Supabase einrichten und config.js ergänzen.</div>`:""}
-    </section>
-    <section class="grid">
-      <article class="card"><h2>Kinder</h2>${state.children.map(x=>`<div class="row between" style="margin:9px 0"><button class="pill" data-child="${x.id}">${x.id===currentChild?"✓ ":""}${esc(x.name)}</button><span class="small">⭐ ${x.stars} · 💎 ${x.crystals}</span></div>`).join("")}<button class="btn secondary" id="addChild">+ Kinderprofil</button></article>
-      <article class="card"><h2>Neue Lernliste</h2><div class="field"><label>Titel</label><input id="setTitle" placeholder="z. B. Ansage KW 40"></div><div class="field"><label>Lernwörter – eines pro Zeile oder mit Komma</label><textarea id="words" rows="6" placeholder="Fahrrad&#10;Frühling&#10;Straße"></textarea></div><button class="btn" id="addSet">Liste anlegen</button></article>
-      <article class="card"><h2>Belohnungen</h2>${state.rewards.map(r=>`<div class="reward"><div><b>${esc(r.title)}</b><div class="small">${r.cost} Sterne</div></div><button class="btn secondary" data-redeem="${r.id}">Einlösen</button></div>`).join("<hr>")}<hr><div class="field"><input id="rewardTitle" placeholder="Neue Belohnung"></div><div class="field"><input id="rewardCost" type="number" min="1" value="100"></div><button class="btn secondary" id="addReward">+ Belohnung</button></article>
-      <article class="card"><h2>Fächer</h2>${state.subjects.map(s=>`<div class="row between" style="margin:9px 0"><span>${s.icon} <b>${esc(s.name)}</b></span><span class="tag">${s.enabled?"aktiv":"vorbereitet"}</span></div>`).join("")}<p class="small">Die Datenstruktur ist fachunabhängig. Neue Module können ergänzt werden, ohne Profile und Lernhistorie umzubauen.</p></article>
-    </section>
-    <h2 style="margin-top:30px">${esc(c?.name||"")} · Lernstand</h2>
-    <section class="grid">${setsForChild().map(s=>`<article class="card"><h3>${esc(s.title)}</h3>${s.items.map(i=>`<div style="margin:10px 0"><div class="row between"><b>${esc(i.text)}</b><span class="small">${masteryLabel(i.mastery)} · ${Math.round(i.mastery)}%</span></div><div class="progress"><i style="width:${i.mastery}%"></i></div></div>`).join("")}</article>`).join("")}</section>
-    <section class="card" style="margin-top:22px"><h2>Cloud-Konto</h2>${cloudBox()}</section>
-  </main>`;
-}
-
-function cloudBox(){
-  if(demo) return `<p class="small">Nach der Supabase-Einrichtung erscheinen hier Anmeldung und Synchronisation. Bis dahin werden alle Daten nur auf diesem Gerät gespeichert.</p>`;
-  if(session) return `<div class="row"><span class="tag">✓ Angemeldet: ${esc(session.user.email||"")}</span><button class="btn secondary" id="sync">Jetzt synchronisieren</button><button class="btn secondary" id="logout">Abmelden</button></div>`;
-  return `<div class="field"><input id="email" type="email" placeholder="E-Mail"></div><div class="field"><input id="password" type="password" placeholder="Passwort (mind. 6 Zeichen)"></div><div class="row"><button class="btn" id="login">Anmelden</button><button class="btn secondary" id="signup">Konto erstellen</button></div>`;
-}
-
-function bindDynamic(){
-  document.querySelectorAll("[data-start]").forEach(b=>b.onclick=()=>startSession(b.dataset.start));
-  $("#addChild")?.addEventListener("click",async()=>{const name=prompt("Name des Kinderprofils:");if(name?.trim()){state.children.push({id:uid(),name:name.trim(),theme:"zauberwald",stars:0,crystals:0});await pushCloud();render()}});
-  $("#addSet")?.addEventListener("click",async()=>{
-    const title=$("#setTitle").value.trim(), raw=$("#words").value;
-    const words=[...new Set(raw.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean))];
-    if(!title||!words.length)return alert("Bitte Titel und mindestens ein Lernwort eingeben.");
-    state.sets.push({id:uid(),childId:currentChild,subjectId:"de",title,due:null,active:true,items:words.map(x=>({id:uid(),text:x,mastery:10,seen:0,correct:0,wrong:0,last:null}))});
-    await pushCloud(); render();
-  });
-  $("#addReward")?.addEventListener("click",async()=>{const t=$("#rewardTitle").value.trim(),cost=Number($("#rewardCost").value);if(t&&cost>0){state.rewards.push({id:uid(),title:t,cost,active:true});await pushCloud();render()}});
-  document.querySelectorAll("[data-redeem]").forEach(b=>b.onclick=async()=>{const r=state.rewards.find(x=>x.id===b.dataset.redeem),c=child();if(c.stars<r.cost)return alert("Noch nicht genug Sterne.");if(confirm(`${r.title} für ${r.cost} Sterne einlösen?`)){c.stars-=r.cost;await pushCloud();render()}});
-  document.querySelectorAll("[data-build]").forEach(b=>b.onclick=async()=>{const cost=b.dataset.build==="Lichterkette"?5:8,c=child();if(c.crystals<cost)return alert("Noch nicht genug Kristalle.");c.crystals-=cost;state.world.decor.push(b.dataset.build);await pushCloud();render()});
-  $("#sync")?.addEventListener("click",async()=>{await pushCloud();alert("Synchronisiert.")});
-  $("#logout")?.addEventListener("click",async()=>{await supabase.auth.signOut();session=null;render()});
-  $("#login")?.addEventListener("click",()=>auth(false));
-  $("#signup")?.addEventListener("click",()=>auth(true));
-}
-async function auth(signup){
-  const email=$("#email").value.trim(),password=$("#password").value;
-  const res=signup?await supabase.auth.signUp({email,password}):await supabase.auth.signInWithPassword({email,password});
-  if(res.error)return alert(res.error.message);
-  session=res.data.session;
-  if(session){await pullCloud();await pushCloud();}
-  alert(signup && !session ? "Konto erstellt. Prüfe ggf. die Bestätigungs-E-Mail." : "Angemeldet.");
-  render();
-}
-
-const oldRender=render;
-render=function(){oldRender();bindDynamic()}
-
-if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"));
-await initSupabase();
-render();
+async function auth(signup){let email=$("#email").value.trim(),password=$("#pw").value;let r=signup?await supabase.auth.signUp({email,password}):await supabase.auth.signInWithPassword({email,password});if(r.error)return alert(r.error.message);session=r.data.session;if(session){await pullCloud();render()}else alert("Bitte ggf. Bestätigungs-E-Mail öffnen.")}
+await initCloud();render();
