@@ -3,3 +3,16 @@
 @media(max-width:600px){.page{padding:20px 14px 50px}.magicHero{padding:28px 20px}.magicHero h1,.placeHeader h1{font-size:36px}.magicTop nav button:nth-child(3),.magicTop nav button:nth-child(4){display:none}.currency span{display:none}.worldPage{padding:8px}.worldHero{border-radius:16px}.mapCounter{font-size:10px;top:9%;right:2%}.catalogGrid{grid-template-columns:repeat(2,1fr)}.collectionGrid{grid-template-columns:repeat(3,1fr)}.roomScene,.areaScene{min-height:430px;padding:25px}.roomDecor,.sceneDecor{padding-top:100px}.placeTools{align-items:flex-start;flex-direction:column}}
 /* V4.1 Lernspiel-Auswahl */
 .chooseBox{max-width:920px}.optionGrid,.gameGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:10px 0 24px}.option,.game{min-height:105px;border:1px solid #dcd2e6;border-radius:20px;padding:16px;background:linear-gradient(145deg,#fff,#f8f3fb);color:var(--ink);text-align:left;display:flex;flex-direction:column;gap:7px;box-shadow:0 7px 20px #3f31570c}.option span,.game span{font-size:13px;color:var(--muted)}.option.selected,.game.selected{border:2px solid #8b70b8;background:linear-gradient(145deg,#f6f0ff,#fff8fb);box-shadow:0 0 0 4px #8b70b814}.promptWord{font-size:28px;opacity:.78}
+
+/* V4.2 – vollständig touchbasierte Lernspiele */
+.taskText{text-align:center;font-size:20px;font-weight:800;color:#57466c;margin:28px 0 16px}
+.bigChoices button{min-height:64px;font-size:22px;touch-action:manipulation}
+.letterTray{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:25px 0}
+.letterTile{min-width:58px;height:58px;border:2px solid #cfc1df;border-radius:16px;background:linear-gradient(#fff,#f4eef9);font-size:25px;font-weight:900;color:#49385e;box-shadow:0 6px 12px #3d2b5118;touch-action:manipulation}
+.letterTile:active{transform:scale(.96)}.letterTile:disabled{opacity:.25;transform:scale(.9)}
+.tapAnswer,.memoryWord{min-height:82px;display:grid;place-items:center;text-align:center;margin:24px 0;padding:15px;border-radius:20px;background:#f5effb;border:2px solid #ddd0e8;font-size:38px;font-weight:900;letter-spacing:5px;color:#392b50}
+.memoryWord{font-size:46px;background:linear-gradient(135deg,#f6f0ff,#eaf9f6);box-shadow:0 10px 30px #5b44751a}
+.memoryTimer{height:8px;background:#ece5f1;border-radius:99px;overflow:hidden;margin:0 auto 14px;max-width:420px}.memoryTimer i{display:block;height:100%;background:linear-gradient(90deg,#7bcac0,#8067b8);animation:memoryCountdown 4s linear forwards}@keyframes memoryCountdown{from{width:100%}to{width:0}}
+.wrongPick{animation:wrongShake .35s ease;background:#ffe5e8!important;border-color:#d77!important}@keyframes wrongShake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.center{justify-content:center}.centerText{text-align:center}
+@media(max-width:600px){.letterTile{min-width:52px;height:52px;font-size:23px}.tapAnswer,.memoryWord{font-size:30px}.bigChoices button{font-size:19px}}
