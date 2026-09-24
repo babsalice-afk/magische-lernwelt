@@ -60,30 +60,15 @@ async function initCloud(){
  try{const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const r=await supabase.auth.getSession();session=r.data.session;if(session)await pullCloud()}catch(e){console.warn(e)}
 }
 async function pullCloud(){if(!supabase||!session)return;const r=await supabase.from("app_state").select("payload").eq("user_id",session.user.id).maybeSingle();if(r.data?.payload){
-  const cloud = r.data.payload;
-  // Alte V1-Cloud-Daten mit den neuen V2-Strukturen ergänzen,
-  // statt die V2-Standardstruktur vollständig zu überschreiben.
-  state = {
-    ...structuredClone(defaultState),
-    ...cloud,
-    family: {...structuredClone(defaultState.family), ...(cloud.family||{})},
-    subjects: cloud.subjects?.length ? cloud.subjects : structuredClone(defaultState.subjects),
-    children: cloud.children || [],
-    sets: cloud.sets || [],
-    rewards: cloud.rewards || [],
-    collection: structuredClone(defaultState.collection).map(base => {
-      const saved = (cloud.collection||[]).find(x => x.id === base.id);
-      return saved ? {...base, ...saved} : base;
-    }),
-    catalog: structuredClone(defaultState.catalog).map(base => {
-      const saved = (cloud.catalog||[]).find(x => x.id === base.id);
-      return saved ? {...base, ...saved} : base;
-    }),
-    world: {...structuredClone(defaultState.world), ...(cloud.world||{})},
-    history: cloud.history || []
-  };
-  currentChild=state.children[0]?.id||null;
-  saveLocal()
+  const cloud=r.data.payload;
+  state={...structuredClone(defaultState),...cloud,
+    family:{...structuredClone(defaultState.family),...(cloud.family||{})},
+    subjects:cloud.subjects?.length?cloud.subjects:structuredClone(defaultState.subjects),
+    children:cloud.children||[],sets:cloud.sets||[],rewards:cloud.rewards||[],
+    collection:structuredClone(defaultState.collection).map(base=>({...base,...((cloud.collection||[]).find(x=>x.id===base.id)||{})})),
+    catalog:structuredClone(defaultState.catalog).map(base=>({...base,...((cloud.catalog||[]).find(x=>x.id===base.id)||{})})),
+    world:{...structuredClone(defaultState.world),...(cloud.world||{})},history:cloud.history||[]};
+  currentChild=state.children[0]?.id||null;saveLocal()
 }}
 async function pushCloud(){if(!supabase||!session)return;await supabase.from("app_state").upsert({user_id:session.user.id,payload:state,updated_at:now()},{onConflict:"user_id"})}
 function shell(body){return `<div class="shell"><header class="top"><div class="brand"><div class="logo">✦</div><div>Magische Lernwelt<div class="small">${session?"Cloud · automatisch synchronisiert":demo?"Lokal":"Cloud · Anmeldung erforderlich"}</div></div></div><nav>${[["home","Start"],["learn","Lernen"],["world","Zauberwelt"],["parent","Eltern"]].map(([r,n])=>`<button data-route="${r}" class="${route===r?"active":""}">${n}</button>`).join("")}</nav></header>${body}</div>`}
@@ -109,7 +94,18 @@ function startLearning(id){let set=state.sets.find(x=>x.id===id),n=0,earned=0,to
  function ans(ok){it.seen=(it.seen||0)+1;it.last=now();if(ok){it.correct=(it.correct||0)+1;it.mastery=Math.min(100,(it.mastery||0)+9);earned+=2;$("#fb").textContent="✦ Richtig"}else{it.wrong=(it.wrong||0)+1;it.mastery=Math.max(0,(it.mastery||0)-7);$("#fb").textContent="Richtig ist: "+it.text}state.history.push({childId:currentChild,itemId:it.id,mode:m,ok,at:now()});scheduleSync();n++;setTimeout(()=>n>=total?finish():draw(),800)}
  function finish(){let c=child();c.stars=(c.stars||0)+earned;let gems=Math.max(1,Math.floor(earned/8));c.crystals=(c.crystals||0)+gems;let locked=state.collection.filter(x=>!x.unlocked),found=null;if(locked.length&&Math.random()<.32){found=locked[Math.floor(Math.random()*locked.length)];found.unlocked=true}scheduleSync();$("#app").innerHTML=`<div class="learn"><div class="learnbox" style="text-align:center"><h1>Geschafft.</h1><p>⭐ +${earned} &nbsp; 💎 +${gems}</p>${found?`<div class="card"><div style="font-size:60px">${found.icon}</div><b>Neu entdeckt: ${found.name}</b></div>`:""}<br><button class="btn" id="world">Zur Zauberwelt</button></div></div>`;$("#world").onclick=()=>{route="world";render()}}draw()}
 function world(){let c=child(),cats=["Alle",...new Set(state.catalog.map(x=>x.cat))];return `<main class="page"><section class="hero"><span class="tag">Die Welt wächst mit dir</span><h1>Magische Lichtung</h1><p class="muted">Bewohner, Dekorationen und neue Orte werden außerhalb des Lernmodus gesammelt und gestaltet.</p>${profileBar()}</section>
-<section class="worldHero" style="margin-top:20px"><div class="mountain"></div><div class="mountain m2"></div><div class="mist"></div><div class="ground"></div><div class="worldLabel">🌿 ${state.world.area}</div><div class="worldStats">⭐ ${c?.stars||0} &nbsp; 💎 ${c?.crystals||0}</div><div class="bigTree"><div class="trunk"></div><div class="branch b1"></div><div class="branch b2"></div><div class="crown c1"></div><div class="crown c2"></div><div class="crown c3"></div><div class="treehouse"></div><div class="door"></div><i class="lantern" style="left:100px;top:250px"></i><i class="lantern" style="right:85px;top:220px"></i></div></section>
+<section class="worldHero illustrated" style="margin-top:20px">
+<img src="./assets/zauberwelt.png" alt="Magische Zauberwelt" class="worldImage">
+<div class="worldStats">⭐ ${c?.stars||0} &nbsp; 💎 ${c?.crystals||0}</div>
+<button class="hotspot h-house" data-place="Zauberhaus">Mein Zauberhaus</button>
+<button class="hotspot h-clearing" data-place="Magische Lichtung">Magische Lichtung</button>
+<button class="hotspot h-water" data-place="Wasserfall">Wasserfall</button>
+<button class="hotspot h-crystal" data-place="Kristallhöhle">Kristallhöhle</button>
+<button class="hotspot h-dragon" data-place="Drachenberg">Drachenberg</button>
+<button class="hotspot h-elf" data-place="Elfendorf">Elfendorf</button>
+<button class="hotspot h-fairy" data-place="Feengarten">Feengarten</button>
+<button class="hotspot h-garden" data-place="Garten">Garten</button>
+</section>
 <section class="card" style="margin-top:20px"><h2>🪄 Gestalten</h2><p class="small">Katalog für Wohnraum, Haus, Garten, Außenbereich und saisonale Dekoration.</p><div class="catalogTabs">${cats.map(x=>`<button class="pill ${x===catalogCat?"active":""}" data-cat="${x}">${x}</button>`).join("")}</div><div class="catalog">${state.catalog.filter(x=>catalogCat==="Alle"||x.cat===catalogCat).map(x=>`<div class="item ${state.world.owned.includes(x.id)?"owned":""}"><div><div class="itemIcon">${x.icon}</div><b>${x.name}</b><div class="small">${x.cat}</div></div><button class="btn ${state.world.owned.includes(x.id)?"light":""}" data-buy="${x.id}">${state.world.owned.includes(x.id)?"Besitzt du":"💎 "+x.cost}</button></div>`).join("")}</div></section>
 <section class="card" style="margin-top:20px"><h2>✨ Magische Sammlung</h2><p class="small">Eigene Fantasiewesen in einer märchenhaften Welt: Tiere, Drachen, Elfen, Feen, Geister und saisonale Wesen.</p><div class="collection">${state.collection.map(x=>`<div class="being ${x.unlocked?"":"locked"}"><div class="ico">${x.unlocked?x.icon:"❔"}</div><b>${x.unlocked?x.name:"Unentdeckt"}</b><div class="rarity">${x.unlocked?x.type+" · "+x.rarity:"weiterlernen"}</div></div>`).join("")}</div></section></main>`}
 function parent(){let c=child();return `<main class="page"><section class="hero"><span class="tag">Elternbereich</span><h1>Verwalten & Überblick</h1><p class="muted">Profile, Lernwörter, Belohnungen und Lernstand. Änderungen werden automatisch synchronisiert.</p></section><section class="grid">
@@ -123,6 +119,7 @@ function bind(){
  document.querySelectorAll("[data-route]").forEach(b=>b.onclick=()=>{route=b.dataset.route;render()});document.querySelectorAll("[data-child]").forEach(b=>b.onclick=()=>{currentChild=b.dataset.child;render()});
  document.querySelectorAll("[data-start]").forEach(b=>b.onclick=()=>startLearning(b.dataset.start));
  document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{catalogCat=b.dataset.cat;render()});
+ document.querySelectorAll("[data-place]").forEach(b=>b.onclick=()=>{state.world.area=b.dataset.place;scheduleSync();alert("Bereich „"+b.dataset.place+"“ ist ausgewählt. Die eigene Detailansicht bauen wir als nächstes aus.")});
  document.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>{let x=state.catalog.find(i=>i.id===b.dataset.buy),c=child();if(!c)return alert("Bitte zuerst Kinderprofil wählen.");if(state.world.owned.includes(x.id))return;if((c.crystals||0)<x.cost)return alert("Noch nicht genug Kristalle.");c.crystals-=x.cost;state.world.owned.push(x.id);state.world.active.push(x.id);scheduleSync();render()});
  $("#addChild")?.addEventListener("click",()=>{let n=prompt("Name des Kinderprofils:");if(n?.trim()){let x={id:uid(),name:n.trim(),stars:0,crystals:0};state.children.push(x);currentChild=x.id;scheduleSync();render()}});
  document.querySelectorAll("[data-delete-child]").forEach(b=>b.onclick=()=>{let x=state.children.find(c=>c.id===b.dataset.deleteChild);if(confirm(`Profil "${x.name}" und seine Lernlisten wirklich löschen?`)){state.children=state.children.filter(c=>c.id!==x.id);state.sets=state.sets.filter(s=>s.childId!==x.id);currentChild=state.children[0]?.id||null;scheduleSync();render()}});
