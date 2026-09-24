@@ -16,3 +16,11 @@
 .wrongPick{animation:wrongShake .35s ease;background:#ffe5e8!important;border-color:#d77!important}@keyframes wrongShake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .center{justify-content:center}.centerText{text-align:center}
 @media(max-width:600px){.letterTile{min-width:52px;height:52px;font-size:23px}.tapAnswer,.memoryWord{font-size:30px}.bigChoices button{font-size:19px}}
+
+/* V4.3 – Sterne-Shop und robuste Welt-Navigation */
+.collectionWallet{display:inline-flex;margin-top:14px;padding:10px 16px;border-radius:999px;background:#fff8d9;border:1px solid #ead17a;font-weight:900;font-size:18px}
+.collectionGroup{margin:28px 0}.creatureCard .starBuy{margin-top:12px;width:100%;min-height:44px}
+.ownedBadge{display:block;margin-top:12px;padding:8px;border-radius:12px;background:#edf8ed;font-weight:800}
+.areaChips button{cursor:pointer;min-height:48px;position:relative;z-index:20}
+.magicTop nav button{cursor:pointer;position:relative;z-index:100}
+@media(max-width:800px){.magicTop{overflow-x:auto}.magicTop nav{min-width:max-content}.collectionGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
