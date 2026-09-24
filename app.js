@@ -59,7 +59,32 @@ async function initCloud(){
  if(demo)return;
  try{const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const r=await supabase.auth.getSession();session=r.data.session;if(session)await pullCloud()}catch(e){console.warn(e)}
 }
-async function pullCloud(){if(!supabase||!session)return;const r=await supabase.from("app_state").select("payload").eq("user_id",session.user.id).maybeSingle();if(r.data?.payload){state=r.data.payload;currentChild=state.children[0]?.id||null;saveLocal()}}
+async function pullCloud(){if(!supabase||!session)return;const r=await supabase.from("app_state").select("payload").eq("user_id",session.user.id).maybeSingle();if(r.data?.payload){
+  const cloud = r.data.payload;
+  // Alte V1-Cloud-Daten mit den neuen V2-Strukturen ergänzen,
+  // statt die V2-Standardstruktur vollständig zu überschreiben.
+  state = {
+    ...structuredClone(defaultState),
+    ...cloud,
+    family: {...structuredClone(defaultState.family), ...(cloud.family||{})},
+    subjects: cloud.subjects?.length ? cloud.subjects : structuredClone(defaultState.subjects),
+    children: cloud.children || [],
+    sets: cloud.sets || [],
+    rewards: cloud.rewards || [],
+    collection: structuredClone(defaultState.collection).map(base => {
+      const saved = (cloud.collection||[]).find(x => x.id === base.id);
+      return saved ? {...base, ...saved} : base;
+    }),
+    catalog: structuredClone(defaultState.catalog).map(base => {
+      const saved = (cloud.catalog||[]).find(x => x.id === base.id);
+      return saved ? {...base, ...saved} : base;
+    }),
+    world: {...structuredClone(defaultState.world), ...(cloud.world||{})},
+    history: cloud.history || []
+  };
+  currentChild=state.children[0]?.id||null;
+  saveLocal()
+}}
 async function pushCloud(){if(!supabase||!session)return;await supabase.from("app_state").upsert({user_id:session.user.id,payload:state,updated_at:now()},{onConflict:"user_id"})}
 function shell(body){return `<div class="shell"><header class="top"><div class="brand"><div class="logo">✦</div><div>Magische Lernwelt<div class="small">${session?"Cloud · automatisch synchronisiert":demo?"Lokal":"Cloud · Anmeldung erforderlich"}</div></div></div><nav>${[["home","Start"],["learn","Lernen"],["world","Zauberwelt"],["parent","Eltern"]].map(([r,n])=>`<button data-route="${r}" class="${route===r?"active":""}">${n}</button>`).join("")}</nav></header>${body}</div>`}
 function render(){
