@@ -1,7 +1,8 @@
-ZAUBERWELT – 24 Karten
+HD-KARTENSETS
 
-Ordnerstruktur:
-assets/cards/zauberwelt/
+Enthalten:
+- assets/cards/abenteuerpiraten/ (24 JPG)
+- assets/cards/waldreich/ (24 JPG)
 
-Die Dateinamen entsprechen den bestehenden Bildpfaden der App.
-Den Ordner zauberwelt im GitHub-Projekt ersetzen.
+Die Dateinamen entsprechen den bereits in der App verwendeten Bildpfaden.
+Die beiden Ordner können direkt die bisherigen Ordner in assets/cards ersetzen.
