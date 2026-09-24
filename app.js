@@ -71,7 +71,7 @@ async function pullCloud(){if(!supabase||!session)return;const r=await supabase.
   currentChild=state.children[0]?.id||null;saveLocal()
 }}
 async function pushCloud(){if(!supabase||!session)return;await supabase.from("app_state").upsert({user_id:session.user.id,payload:state,updated_at:now()},{onConflict:"user_id"})}
-function shell(body){return `<div class="shell"><header class="top"><div class="brand"><div class="logo">✦</div><div>Magische Lernwelt<div class="small">${session?"Cloud · automatisch synchronisiert":demo?"Lokal":"Cloud · Anmeldung erforderlich"}</div></div></div><nav>${[["home","Start"],["learn","Lernen"],["world","Zauberwelt"],["parent","Eltern"]].map(([r,n])=>`<button data-route="${r}" class="${route===r?"active":""}">${n}</button>`).join("")}</nav></header>${body}</div>`}
+function shell(body){return `<div class="shell"><header class="top ${route==="world"?"worldTopHidden":""}"><div class="brand"><div class="logo">✦</div><div>Magische Lernwelt<div class="small">${session?"Cloud · automatisch synchronisiert":demo?"Lokal":"Cloud · Anmeldung erforderlich"}</div></div></div><nav>${[["home","Start"],["learn","Lernen"],["world","Zauberwelt"],["parent","Eltern"]].map(([r,n])=>`<button data-route="${r}" class="${route===r?"active":""}">${n}</button>`).join("")}</nav></header>${body}</div>`}
 function render(){
  let b=route==="home"?home():route==="learn"?learnHome():route==="world"?world():parent();
  $("#app").innerHTML=shell(b);bind();
@@ -93,21 +93,31 @@ function startLearning(id){let set=state.sets.find(x=>x.id===id),n=0,earned=0,to
  function check(){ans($("#answer").value.trim().toLocaleLowerCase("de")===w.toLocaleLowerCase("de"))}
  function ans(ok){it.seen=(it.seen||0)+1;it.last=now();if(ok){it.correct=(it.correct||0)+1;it.mastery=Math.min(100,(it.mastery||0)+9);earned+=2;$("#fb").textContent="✦ Richtig"}else{it.wrong=(it.wrong||0)+1;it.mastery=Math.max(0,(it.mastery||0)-7);$("#fb").textContent="Richtig ist: "+it.text}state.history.push({childId:currentChild,itemId:it.id,mode:m,ok,at:now()});scheduleSync();n++;setTimeout(()=>n>=total?finish():draw(),800)}
  function finish(){let c=child();c.stars=(c.stars||0)+earned;let gems=Math.max(1,Math.floor(earned/8));c.crystals=(c.crystals||0)+gems;let locked=state.collection.filter(x=>!x.unlocked),found=null;if(locked.length&&Math.random()<.32){found=locked[Math.floor(Math.random()*locked.length)];found.unlocked=true}scheduleSync();$("#app").innerHTML=`<div class="learn"><div class="learnbox" style="text-align:center"><h1>Geschafft.</h1><p>⭐ +${earned} &nbsp; 💎 +${gems}</p>${found?`<div class="card"><div style="font-size:60px">${found.icon}</div><b>Neu entdeckt: ${found.name}</b></div>`:""}<br><button class="btn" id="world">Zur Zauberwelt</button></div></div>`;$("#world").onclick=()=>{route="world";render()}}draw()}
-function world(){let c=child(),cats=["Alle",...new Set(state.catalog.map(x=>x.cat))];return `<main class="page"><section class="hero"><span class="tag">Die Welt wächst mit dir</span><h1>Magische Lichtung</h1><p class="muted">Bewohner, Dekorationen und neue Orte werden außerhalb des Lernmodus gesammelt und gestaltet.</p>${profileBar()}</section>
-<section class="worldHero illustrated" style="margin-top:20px">
-<img src="./assets/zauberwelt.png" alt="Magische Zauberwelt" class="worldImage">
-<div class="worldStats">⭐ ${c?.stars||0} &nbsp; 💎 ${c?.crystals||0}</div>
-<button class="hotspot h-house" data-place="Zauberhaus">Mein Zauberhaus</button>
-<button class="hotspot h-clearing" data-place="Magische Lichtung">Magische Lichtung</button>
-<button class="hotspot h-water" data-place="Wasserfall">Wasserfall</button>
-<button class="hotspot h-crystal" data-place="Kristallhöhle">Kristallhöhle</button>
-<button class="hotspot h-dragon" data-place="Drachenberg">Drachenberg</button>
-<button class="hotspot h-elf" data-place="Elfendorf">Elfendorf</button>
-<button class="hotspot h-fairy" data-place="Feengarten">Feengarten</button>
-<button class="hotspot h-garden" data-place="Garten">Garten</button>
+function world(){let c=child(),cats=["Alle",...new Set(state.catalog.map(x=>x.cat))];return `<main class="page worldPage">
+<section class="worldHero illustrated v3">
+<img src="./assets/zauberwelt-v3.png" alt="Magische Zauberwelt" class="worldImage">
+<div class="worldStats realCounter">⭐ ${c?.stars||0} &nbsp; 💎 ${c?.crystals||0}</div>
+<!-- transparente Klickflächen über den im Bild gezeichneten oberen Buttons -->
+<button class="navHot n-learn" aria-label="Lernen" data-maproute="learn"></button>
+<button class="navHot n-world" aria-label="Zauberwelt" data-maproute="world"></button>
+<button class="navHot n-collection" aria-label="Sammlung" data-scroll="collection"></button>
+<button class="navHot n-design" aria-label="Gestalten" data-scroll="design"></button>
+<button class="navHot n-friends" aria-label="Freunde" data-special="friends"></button>
+<button class="navHot n-parent" aria-label="Eltern" data-maproute="parent"></button>
+<button class="navHot n-plus" aria-label="Kristalle und Belohnungen" data-maproute="parent"></button>
+<!-- Klickflächen der Orte -->
+<button class="placeHot p-house" aria-label="Mein Zauberhaus" data-place="Mein Zauberhaus"></button>
+<button class="placeHot p-clearing" aria-label="Magische Lichtung" data-place="Magische Lichtung"></button>
+<button class="placeHot p-water" aria-label="Wasserfall" data-place="Wasserfall"></button>
+<button class="placeHot p-crystal" aria-label="Kristallhöhle" data-place="Kristallhöhle"></button>
+<button class="placeHot p-dragon" aria-label="Drachenberg" data-place="Drachenberg"></button>
+<button class="placeHot p-elf" aria-label="Elfendorf" data-place="Elfendorf"></button>
+<button class="placeHot p-fairy" aria-label="Feengarten" data-place="Feengarten"></button>
+<button class="placeHot p-garden" aria-label="Garten" data-place="Garten"></button>
 </section>
-<section class="card" style="margin-top:20px"><h2>🪄 Gestalten</h2><p class="small">Katalog für Wohnraum, Haus, Garten, Außenbereich und saisonale Dekoration.</p><div class="catalogTabs">${cats.map(x=>`<button class="pill ${x===catalogCat?"active":""}" data-cat="${x}">${x}</button>`).join("")}</div><div class="catalog">${state.catalog.filter(x=>catalogCat==="Alle"||x.cat===catalogCat).map(x=>`<div class="item ${state.world.owned.includes(x.id)?"owned":""}"><div><div class="itemIcon">${x.icon}</div><b>${x.name}</b><div class="small">${x.cat}</div></div><button class="btn ${state.world.owned.includes(x.id)?"light":""}" data-buy="${x.id}">${state.world.owned.includes(x.id)?"Besitzt du":"💎 "+x.cost}</button></div>`).join("")}</div></section>
-<section class="card" style="margin-top:20px"><h2>✨ Magische Sammlung</h2><p class="small">Eigene Fantasiewesen in einer märchenhaften Welt: Tiere, Drachen, Elfen, Feen, Geister und saisonale Wesen.</p><div class="collection">${state.collection.map(x=>`<div class="being ${x.unlocked?"":"locked"}"><div class="ico">${x.unlocked?x.icon:"❔"}</div><b>${x.unlocked?x.name:"Unentdeckt"}</b><div class="rarity">${x.unlocked?x.type+" · "+x.rarity:"weiterlernen"}</div></div>`).join("")}</div></section></main>`}
+<section class="card placePanel" id="placePanel"><div class="row between"><div><span class="tag">Aktueller Ort</span><h2 id="placeTitle">${esc(state.world.area||"Magische Lichtung")}</h2></div><button class="btn light" data-open-design>✨ Hier gestalten</button></div><p class="muted" id="placeText">Wähle direkt in der Karte einen Ort aus. Jeder Bereich kann später eigene Bewohner, Dekorationen und Freischaltungen erhalten.</p><div class="placeActions" id="placeActions"></div></section>
+<section class="card" id="design" style="margin-top:20px"><h2>🪄 Gestalten</h2><p class="small">Katalog für Wohnraum, Haus, Garten, Außenbereich und saisonale Dekoration.</p><div class="catalogTabs">${cats.map(x=>`<button class="pill ${x===catalogCat?"active":""}" data-cat="${x}">${x}</button>`).join("")}</div><div class="catalog">${state.catalog.filter(x=>catalogCat==="Alle"||x.cat===catalogCat).map(x=>`<div class="item ${state.world.owned.includes(x.id)?"owned":""}"><div><div class="itemIcon">${x.icon}</div><b>${x.name}</b><div class="small">${x.cat}</div></div><button class="btn ${state.world.owned.includes(x.id)?"light":""}" data-buy="${x.id}">${state.world.owned.includes(x.id)?"Besitzt du":"💎 "+x.cost}</button></div>`).join("")}</div></section>
+<section class="card" id="collection" style="margin-top:20px"><h2>✨ Magische Sammlung</h2><p class="small">Tiere, Drachen, Elfen, Feen, Geister und saisonale Wesen.</p><div class="collection">${state.collection.map(x=>`<div class="being ${x.unlocked?"":"locked"}"><div class="ico">${x.unlocked?x.icon:"❔"}</div><b>${x.unlocked?x.name:"Unentdeckt"}</b><div class="rarity">${x.unlocked?x.type+" · "+x.rarity:"weiterlernen"}</div></div>`).join("")}</div></section></main>`}
 function parent(){let c=child();return `<main class="page"><section class="hero"><span class="tag">Elternbereich</span><h1>Verwalten & Überblick</h1><p class="muted">Profile, Lernwörter, Belohnungen und Lernstand. Änderungen werden automatisch synchronisiert.</p></section><section class="grid">
 <div class="card"><h2>Kinderprofile</h2>${state.children.map(x=>`<div class="row between" style="margin:8px 0"><button class="pill" data-child="${x.id}">${x.id===currentChild?"✓ ":""}${esc(x.name)}</button><button class="btn light" data-delete-child="${x.id}">Löschen</button></div>`).join("")}<button class="btn light" id="addChild">+ Profil</button></div>
 <div class="card"><h2>Lernliste anlegen</h2><div class="field"><input id="title" placeholder="z. B. Ansage Woche 40"></div><div class="field"><textarea id="words" rows="6" placeholder="Ein Wort pro Zeile"></textarea></div><button class="btn" id="addSet">Speichern</button></div>
@@ -120,6 +130,20 @@ function bind(){
  document.querySelectorAll("[data-start]").forEach(b=>b.onclick=()=>startLearning(b.dataset.start));
  document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{catalogCat=b.dataset.cat;render()});
  document.querySelectorAll("[data-place]").forEach(b=>b.onclick=()=>{state.world.area=b.dataset.place;scheduleSync();alert("Bereich „"+b.dataset.place+"“ ist ausgewählt. Die eigene Detailansicht bauen wir als nächstes aus.")});
+ document.querySelectorAll("[data-maproute]").forEach(b=>b.onclick=()=>{route=b.dataset.maproute;render()});
+ document.querySelectorAll("[data-scroll]").forEach(b=>b.onclick=()=>document.getElementById(b.dataset.scroll)?.scrollIntoView({behavior:"smooth"}));
+ document.querySelectorAll("[data-special]").forEach(b=>b.onclick=()=>alert("Der Freunde-Bereich ist vorbereitet und wird später freigeschaltet."));
+ document.querySelectorAll("[data-place]").forEach(b=>b.onclick=()=>{state.world.area=b.dataset.place;scheduleSync();const t=$("#placeTitle"),p=$("#placeText"),a=$("#placeActions");if(t)t.textContent=b.dataset.place;const info={
+ "Mein Zauberhaus":"Dein persönliches Baumhaus. Hier kommen später Zimmer, Möbel, Wanddekoration, Licht und Sammlungsstücke hinein.",
+ "Magische Lichtung":"Der zentrale Treffpunkt deiner Bewohner mit Lagerfeuer, Sitzplätzen und frei platzierbarer Außendekoration.",
+ "Wasserfall":"Ein ruhiger Naturbereich. Hier können Wasserpflanzen, Brücken, Laternen und seltene Wasserwesen freigeschaltet werden.",
+ "Kristallhöhle":"Ein geheimnisvoller Sammelort für Kristalle und besondere Wesen.",
+ "Drachenberg":"Gebiet für Drachen, Nester und seltene Freischaltungen.",
+ "Elfendorf":"Wohnbereich der Elfen mit kleinen Häusern, Brücken und Walddekoration.",
+ "Feengarten":"Blumen, Feenhäuser, Teiche und leuchtende Gartendekoration.",
+ "Garten":"Dein frei gestaltbarer Garten mit Pflanzen, Kürbissen, Möbeln und saisonaler Dekoration."
+ };if(p)p.textContent=info[b.dataset.place]||"";if(a)a.innerHTML=`<span class="tag">📍 ${b.dataset.place}</span>`;$("#placePanel")?.scrollIntoView({behavior:"smooth",block:"center"})});
+ document.querySelectorAll("[data-open-design]").forEach(b=>b.onclick=()=>$("#design")?.scrollIntoView({behavior:"smooth"}));
  document.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>{let x=state.catalog.find(i=>i.id===b.dataset.buy),c=child();if(!c)return alert("Bitte zuerst Kinderprofil wählen.");if(state.world.owned.includes(x.id))return;if((c.crystals||0)<x.cost)return alert("Noch nicht genug Kristalle.");c.crystals-=x.cost;state.world.owned.push(x.id);state.world.active.push(x.id);scheduleSync();render()});
  $("#addChild")?.addEventListener("click",()=>{let n=prompt("Name des Kinderprofils:");if(n?.trim()){let x={id:uid(),name:n.trim(),stars:0,crystals:0};state.children.push(x);currentChild=x.id;scheduleSync();render()}});
  document.querySelectorAll("[data-delete-child]").forEach(b=>b.onclick=()=>{let x=state.children.find(c=>c.id===b.dataset.deleteChild);if(confirm(`Profil "${x.name}" und seine Lernlisten wirklich löschen?`)){state.children=state.children.filter(c=>c.id!==x.id);state.sets=state.sets.filter(s=>s.childId!==x.id);currentChild=state.children[0]?.id||null;scheduleSync();render()}});
