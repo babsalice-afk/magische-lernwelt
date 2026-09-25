@@ -1,0 +1,16 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'at.magischelernwelt.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "at.magischelernwelt.app"
+        minSdk 23
+        targetSdk 30
+        versionCode 1
+        versionName "1.0"
+    }
+}
+
+dependencies { }
