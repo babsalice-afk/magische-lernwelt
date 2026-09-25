@@ -337,4 +337,5 @@ function bind(){$("#parentLogin")?.addEventListener("click",async()=>{if(!supaba
 function buyCreature(id){let x=state.collection.find(i=>i.id===id),c=child();if(!x||!c)return alert("Bitte zuerst ein Kinderprofil wählen.");c.cards=c.cards||[];if(c.cards.includes(id))return;if((c.stars||0)<x.starCost)return alert(`Dir fehlen noch ${x.starCost-(c.stars||0)} Sterne.`);if(!confirm(`${x.name} für ⭐ ${x.starCost} freischalten?`))return;c.stars-=x.starCost;c.cards.push(id);scheduleSync();render()}
 function buy(id){let x=state.catalog.find(i=>i.id===id),c=child();if(!c)return alert("Bitte zuerst Kinderprofil wählen.");if(state.world.owned.includes(id))return alert("Dieser Gegenstand ist bereits im Inventar.");if((c.crystals||0)<x.cost)return alert("Noch nicht genug Kristalle.");c.crystals-=x.cost;state.world.owned.push(id);scheduleSync();render()}
 function toggleDecor(area,id){let arr=state.world.placed[area]||(state.world.placed[area]=[]);let i=arr.indexOf(id);if(i>=0){arr.splice(i,1);if(state.world.positions?.[area])delete state.world.positions[area][id]}else arr.push(id);scheduleSync();render()}
-async async function auth(){return false}\nawait initCloud();normalize();saveLocal();render();
+async function auth(){return false}
+await initCloud();normalize();saveLocal();render();
