@@ -28,3 +28,14 @@ jobs:
           name: Magische-Lernwelt-Fire-HD8
           path: Magische-Lernwelt-Fire-HD8.apk
           retention-days: 30
+      - name: Publish public APK release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: fire-latest
+          name: Magische Lernwelt – Fire HD 8
+          files: Magische-Lernwelt-Fire-HD8.apk
+          body: Installationsdatei für das Fire HD 8.
+          make_latest: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
