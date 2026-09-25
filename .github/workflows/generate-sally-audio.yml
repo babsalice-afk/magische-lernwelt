@@ -1,0 +1,38 @@
+name: Generate Sally Audio
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/generate-sally-audio.yml'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install speech tools
+        run: sudo apt-get update && sudo apt-get install -y espeak ffmpeg
+      - name: Generate British English audio files
+        shell: bash
+        run: |
+          mkdir -p assets/audio/sally
+          words=('hello' 'goodbye' 'good morning' 'thank you' 'please' 'red' 'blue' 'green' 'yellow' 'orange' 'black' 'white' 'pink' 'purple' 'brown' 'one' 'two' 'three' 'four' 'five' 'six' 'seven' 'eight' 'nine' 'ten' 'eleven' 'twelve' 'thirteen' 'fourteen' 'fifteen' 'sixteen' 'seventeen' 'eighteen' 'nineteen' 'twenty' 'book' 'pencil' 'pen' 'schoolbag' 'chair' 'table' 'teacher' 'school' 'mum' 'dad' 'mother' 'father' 'sister' 'brother' 'grandma' 'grandpa' 'family' 'head' 'hand' 'arm' 'leg' 'foot' 'eye' 'ear' 'nose' 'mouth' 'dog' 'cat' 'bird' 'fish' 'horse' 'rabbit' 'mouse' 'duck' 'apple' 'banana' 'bread' 'milk' 'water' 'juice' 'cheese' 'cake' 'sunny' 'rainy' 'cloudy' 'windy' 'hot' 'cold' 'sun' 'rain' 'play' 'swim' 'read' 'sing' 'dance' 'draw' 'run' 'jump')
+          for word in "${words[@]}"; do
+            slug=$(printf '%s' "$word" | tr '[:upper:] ' '[:lower:]-' | tr -cd 'a-z0-9-')
+            espeak -v en-gb -s 125 -w /tmp/sally.wav "$word"
+            ffmpeg -loglevel error -y -i /tmp/sally.wav -codec:a libmp3lame -b:a 24k -ar 22050 -ac 1 "assets/audio/sally/$slug.mp3"
+          done
+      - name: Commit generated audio
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/audio/sally
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add bundled Sally English audio"
+          git push
