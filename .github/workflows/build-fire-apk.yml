@@ -22,22 +22,47 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Build installable debug APK
-        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Restore permanent Android signing key
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > app/release-keystore.jks
+          test -s app/release-keystore.jks
+
+      - name: Build signed release APK
+        env:
+          ANDROID_KEYSTORE_PATH: release-keystore.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: gradle --no-daemon :app:assembleRelease
+
+      - name: Verify APK signature
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -f "$APK"
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Magische-Lernwelt-Fire-HD8.apk
+        run: cp app/build/outputs/apk/release/app-release.apk Magische-Lernwelt-Fire-HD8.apk
+
       - uses: actions/upload-artifact@v4
         with:
           name: Magische-Lernwelt-Fire-HD8
           path: Magische-Lernwelt-Fire-HD8.apk
           retention-days: 30
+
       - name: Publish public APK release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: fire-latest
           name: Magische Lernwelt – Fire HD 8
           files: Magische-Lernwelt-Fire-HD8.apk
-          body: Installationsdatei für das Fire HD 8.
+          body: Installationsdatei für das Fire HD 8. Dauerhaft signierte Release-Version.
           make_latest: true
           prerelease: false
         env:
