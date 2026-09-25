@@ -219,7 +219,20 @@ function startMiko(id,game="mix"){let m=MIKO_MODULES.find(x=>x.id===id),c=child(
  const finish=()=>{let earned=Math.floor(correct/5)+(correct===total?1:0);c.stars=(c.stars||0)+earned;scheduleSync();$("#app").innerHTML=`<div class="finishScene"><div class="finishCard"><div class="finishStar">🌍</div><h1>Wissensrunde geschafft!</h1><p><b>${correct} von ${total}</b> Aufgaben richtig.</p><p>Du hast <b>${earned} Lernsterne</b> verdient.</p><div class="row center" style="margin-top:18px"><button class="btn light" id="mikoAgain">Noch eine Runde</button><button class="btn gold" id="mikoBack">Zur Übersicht</button></div></div></div>`;$("#mikoAgain").onclick=()=>startMiko(id,game);$("#mikoBack").onclick=()=>{route="learn";render()}};
  draw()
 }
+function sallyAudioFile(word){
+ return "./assets/audio/sally/"+String(word).toLowerCase().trim().replace(/\\s+/g,"-").replace(/[^a-z0-9-]/g,"")+".mp3"
+}
 function speakEnglish(word){
+ let text=String(word||"").trim();
+ if(!text)return;
+ try{
+  let audio=new Audio(sallyAudioFile(text));
+  audio.preload="auto";
+  audio.play().then(()=>{}).catch(()=>speakEnglishFallback(text));
+  return
+ }catch(e){speakEnglishFallback(text)}
+}
+function speakEnglishFallback(word){
  try{
   if(window.AndroidSpeech&&typeof window.AndroidSpeech.speak==="function"){
    let ok=window.AndroidSpeech.speak(String(word));
@@ -231,10 +244,10 @@ function speakEnglish(word){
    speechSynthesis.cancel();
    let u=new SpeechSynthesisUtterance(word);u.lang="en-GB";u.rate=.78;
    let vs=speechSynthesis.getVoices(),v=vs.find(x=>/^en-GB/i.test(x.lang))||vs.find(x=>/^en/i.test(x.lang));
-   if(v)u.voice=v;speechSynthesis.speak(u);return
+   if(v){u.voice=v;speechSynthesis.speak(u);return}
   }
  }catch(e){}
- let b=document.querySelector(".sallyAudio");if(b)b.textContent="🔊 Sprachausgabe auf diesem Gerät nicht verfügbar"
+ let b=document.querySelector(".sallyAudio");if(b)b.textContent="🔊 Audio konnte nicht geladen werden"
 }
 function makeSallyTask(m,game="mix"){
  let words=m.words||[],x=words[Math.floor(Math.random()*words.length)],mode=game==="listen"?"en-de":Math.random()<.5?"en-de":"de-en",answer=mode==="en-de"?x[1]:x[0],prompt=mode==="en-de"?"Was bedeutet „"+x[0]+"“?":"Wie heißt „"+x[1]+"“ auf Englisch?",pool=words.filter(w=>w!==x).map(w=>mode==="en-de"?w[1]:w[0]),choices=[answer,...shuffle(pool).slice(0,3)];
