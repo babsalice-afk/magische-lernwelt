@@ -175,7 +175,7 @@ function makeFunkelTask(m){
  else if(type==="verb"){prompt="Welches Wort ist ein Verb?";answer=x[0];choices=shuffle([x[0],"Haus","klein"])}
  else if(type==="adjective"){prompt="Welches Wort ist ein Adjektiv?";answer=x[0];choices=shuffle([x[0],"laufen","Baum"])}
  else if(type==="opposites"){prompt="Was ist das Gegenteil von „"+x[0]+"“?";answer=x[1];choices=shuffle([x[1],x[0],"bunt","rund"]).slice(0,3)}
- else if(type==="wordclass"){prompt="Welche Wortart ist „"+x[0]+"“?";answer=x[1];choices=["Namenwort","Tunwort","Wiewort"]}
+ else if(type==="wordclass"){prompt="Zu welcher Wortfamilie gehört „"+x[0]+"“?";answer=x[1];choices=["Namenwort","Tunwort","Wiewort"]}
  else if(type==="meaning"||type==="sentence"){prompt=x[0];answer=x[1];choices=shuffle(x.slice(1))}
  else if(type==="capital"){prompt="Welche Schreibweise ist richtig?";answer=x[1];choices=shuffle([...new Set([x[1],x[0],x[1].charAt(0).toLowerCase()+x[1].slice(1),x[1].toUpperCase()])]).slice(0,3)}
  else if(type==="syllable"){prompt="Wie wird „"+x[0]+"“ in Silben gegliedert?";answer=x[1];choices=shuffle([x[1],x[0].split("").join(" · "),x[0].slice(0,1)+" · "+x[0].slice(1)])}
