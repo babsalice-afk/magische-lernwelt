@@ -117,17 +117,27 @@ const child=()=>state.children.find(x=>x.id===currentChild), sets=()=>state.sets
 function normalize(){state={...structuredClone(defaultState),...state,family:{...defaultState.family,...(state.family||{})},subjects:state.subjects?.length?state.subjects:structuredClone(SUBJECTS),children:state.children||[],sets:state.sets||[],rewards:state.rewards||[],history:state.history||[]};if(!state.cardMigrationV6){let legacy=(state.collection||[]).filter(x=>x.unlocked).map(x=>x.id);if(state.children[0]&&legacy.length)state.children[0].cards=[...new Set([...(state.children[0].cards||[]),...legacy])];state.cardMigrationV6=true}state.collection=COLLECTION.map(b=>({...b}));state.children.forEach(c=>{c.cards=c.cards||[];c.mathEnabled=c.mathEnabled||[];c.mathProgress=c.mathProgress||{};c.funkelEnabled=c.funkelEnabled||[];c.funkelProgress=c.funkelProgress||{};c.sallyEnabled=c.sallyEnabled||[];c.sallyProgress=c.sallyProgress||{}});if(!state.rewardRecoveryV76){state.children.forEach(c=>c.stars=17);state.rewardRecoveryV76=true}if(!state.profileRewardBaselineV75){state.children.forEach(c=>{c.stars=17});state.profileRewardBaselineV75=true;saveLocal?.()}
 state.catalog=CATALOG.map(b=>({...b,...((state.catalog||[]).find(x=>x.id===b.id)||{})}));state.world={...structuredClone(defaultState.world),...(state.world||{}),placed:{...structuredClone(defaultState.world.placed),...(state.world?.placed||{})},positions:{...(state.world?.positions||{})}};if(!state.world.testGrantV4){state.children.forEach(c=>c.crystals=Math.max(c.crystals||0,1500));state.world.testGrantV4=true}}
 normalize();
+function protectedWallet(){
+ try{return JSON.parse(localStorage.getItem("mlw-profile-vault")||"null")}catch(e){return null}
+}
+function restoreProtectedWallet(){
+ const v=protectedWallet();if(!v?.profiles)return;
+ (state.children||[]).forEach(c=>{let p=v.profiles.find(x=>x.id===c.id);if(!p)return;
+   c.cards=[...new Set([...(p.cards||[]),...(c.cards||[])])];
+   c.stars=Math.max(Number(p.stars||0),Number(c.stars||0));
+ })
+}
 function saveLocal(){
  try{
   const old=localStorage.getItem("mlw-v2");
   if(old)localStorage.setItem("mlw-v2-backup",old);
-  const protectedProfiles=(state.children||[]).map(c=>({id:c.id,name:c.name,stars:Number(c.stars||0),cards:[...(c.cards||[])]}));
+  const prior=protectedWallet(),protectedProfiles=(state.children||[]).map(c=>{let p=prior?.profiles?.find(x=>x.id===c.id);return {id:c.id,name:c.name,stars:Math.max(Number(c.stars||0),Number(p?.stars||0)),cards:[...new Set([...(p?.cards||[]),...(c.cards||[])])]}});
   localStorage.setItem("mlw-profile-vault",JSON.stringify({savedAt:now(),profiles:protectedProfiles}));
  }catch(e){console.warn("Backup konnte nicht geschrieben werden",e)}
  localStorage.setItem("mlw-v2",JSON.stringify(state))
 } function scheduleSync(){saveLocal();clearTimeout(syncTimer);syncTimer=setTimeout(pushCloud,500)}
 async function initCloud(){if(demo)return;try{const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const r=await supabase.auth.getSession();session=r.data.session;if(session)await pullCloud()}catch(e){console.warn(e)}}
-async function pullCloud(){if(!supabase||!session)return;const localChildren=structuredClone(state.children||[]),r=await supabase.from("app_state").select("payload").eq("user_id",session.user.id).maybeSingle();if(r.data?.payload){state={...structuredClone(defaultState),...r.data.payload};normalize();state.children.forEach(c=>{let l=localChildren.find(x=>x.id===c.id);if(!l)return;c.cards=[...new Set([...(c.cards||[]),...(l.cards||[])])];c.stars=Math.max(Number(c.stars||0),Number(l.stars||0))});if(!state.rewardRecoveryCloudV76){state.children.forEach(c=>c.stars=17);state.rewardRecoveryCloudV76=true}currentChild=state.children[0]?.id||null;saveLocal();await pushCloud()}}
+async function pullCloud(){if(!supabase||!session)return;const localChildren=structuredClone(state.children||[]),r=await supabase.from("app_state").select("payload").eq("user_id",session.user.id).maybeSingle();if(r.data?.payload){state={...structuredClone(defaultState),...r.data.payload};normalize();restoreProtectedWallet();state.children.forEach(c=>{let l=localChildren.find(x=>x.id===c.id);if(!l)return;c.cards=[...new Set([...(c.cards||[]),...(l.cards||[])])];c.stars=Math.max(Number(c.stars||0),Number(l.stars||0))});if(!state.rewardRecoveryCloudV76){state.children.forEach(c=>c.stars=17);state.rewardRecoveryCloudV76=true}currentChild=state.children[0]?.id||null;saveLocal();await pushCloud()}}
 async function pushCloud(){if(!supabase||!session)return;await supabase.from("app_state").upsert({user_id:session.user.id,payload:state,updated_at:now()},{onConflict:"user_id"})}
 function topnav(calm=false){let c=child();return `<header class="magicTop ${calm?'calmTop':''}"><button class="profileChip" data-route="home"><span class="avatar">${(c?.name||'?').slice(0,1)}</span><b>${esc(c?.name||'Profil')}</b></button><nav>${[["learn","📖 Lernen"],["collection","✨ Sammlung"],["parent","⚙️ Eltern"]].map(([r,n])=>`<button data-route="${r}" class="${route===r?'active':''}">${n}</button>`).join("")}</nav><div class="currency">⭐ ${c?.stars||0}</div></header>`}
 function shell(body,calm=false){return `<div class="shell fantasyShell">${topnav(calm)}${body}</div>`}
