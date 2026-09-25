@@ -221,10 +221,20 @@ function startMiko(id,game="mix"){let m=MIKO_MODULES.find(x=>x.id===id),c=child(
 }
 function speakEnglish(word){
  try{
-  if("speechSynthesis" in window&&typeof SpeechSynthesisUtterance!=="undefined"){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(word);u.lang="en-GB";u.rate=.78;let vs=speechSynthesis.getVoices(),v=vs.find(x=>/^en-GB/i.test(x.lang))||vs.find(x=>/^en/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u);return}
+  if(window.AndroidSpeech&&typeof window.AndroidSpeech.speak==="function"){
+   let ok=window.AndroidSpeech.speak(String(word));
+   if(ok!==false)return
+  }
  }catch(e){}
- let a=document.getElementById("englishFallbackAudio");if(!a){a=document.createElement("audio");a.id="englishFallbackAudio";a.style.display="none";document.body.appendChild(a)}
- a.src="https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q="+encodeURIComponent(word);a.play().catch(()=>{let b=document.querySelector(".sallyAudio");if(b)b.textContent="🔊 Audio auf diesem Gerät nicht verfügbar"})
+ try{
+  if("speechSynthesis" in window&&typeof SpeechSynthesisUtterance!=="undefined"){
+   speechSynthesis.cancel();
+   let u=new SpeechSynthesisUtterance(word);u.lang="en-GB";u.rate=.78;
+   let vs=speechSynthesis.getVoices(),v=vs.find(x=>/^en-GB/i.test(x.lang))||vs.find(x=>/^en/i.test(x.lang));
+   if(v)u.voice=v;speechSynthesis.speak(u);return
+  }
+ }catch(e){}
+ let b=document.querySelector(".sallyAudio");if(b)b.textContent="🔊 Sprachausgabe auf diesem Gerät nicht verfügbar"
 }
 function makeSallyTask(m,game="mix"){
  let words=m.words||[],x=words[Math.floor(Math.random()*words.length)],mode=game==="listen"?"en-de":Math.random()<.5?"en-de":"de-en",answer=mode==="en-de"?x[1]:x[0],prompt=mode==="en-de"?"Was bedeutet „"+x[0]+"“?":"Wie heißt „"+x[1]+"“ auf Englisch?",pool=words.filter(w=>w!==x).map(w=>mode==="en-de"?w[1]:w[0]),choices=[answer,...shuffle(pool).slice(0,3)];
