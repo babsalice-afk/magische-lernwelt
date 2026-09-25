@@ -114,14 +114,18 @@ let state=JSON.parse(localStorage.getItem("mlw-v2")||"null")||structuredClone(de
 let route="home", currentChild=state.children[0]?.id||null, supabase=null, session=null, syncTimer=null, catalogCat="Alle", selectedArea="clearing", activeCardSet="zauberwelt", selectedCardId=null, collectionFilter="all";
 const esc=(s="")=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const child=()=>state.children.find(x=>x.id===currentChild), sets=()=>state.sets.filter(x=>x.childId===currentChild);
-function normalize(){state={...structuredClone(defaultState),...state,family:{...defaultState.family,...(state.family||{})},subjects:state.subjects?.length?state.subjects:structuredClone(SUBJECTS),children:state.children||[],sets:state.sets||[],rewards:state.rewards||[],history:state.history||[]};if(!state.cardMigrationV6){let legacy=(state.collection||[]).filter(x=>x.unlocked).map(x=>x.id);if(state.children[0]&&legacy.length)state.children[0].cards=[...new Set([...(state.children[0].cards||[]),...legacy])];state.cardMigrationV6=true}state.collection=COLLECTION.map(b=>({...b}));state.children.forEach(c=>{c.cards=c.cards||[];c.mathEnabled=c.mathEnabled||[];c.mathProgress=c.mathProgress||{};c.funkelEnabled=c.funkelEnabled||[];c.funkelProgress=c.funkelProgress||{};c.sallyEnabled=c.sallyEnabled||[];c.sallyProgress=c.sallyProgress||{}});if(!state.starReset20260925){state.children.forEach(c=>c.stars=0);state.starReset20260925=true}
-if(!state.learningReset20260924){
-  state.sets.forEach(s=>(s.items||[]).forEach(x=>{x.mastery=0;x.seen=0;x.correct=0;x.wrong=0;x.last=null}));
-  state.history=[];
-  state.learningReset20260924=true;
-}state.catalog=CATALOG.map(b=>({...b,...((state.catalog||[]).find(x=>x.id===b.id)||{})}));state.world={...structuredClone(defaultState.world),...(state.world||{}),placed:{...structuredClone(defaultState.world.placed),...(state.world?.placed||{})},positions:{...(state.world?.positions||{})}};if(!state.world.testGrantV4){state.children.forEach(c=>c.crystals=Math.max(c.crystals||0,1500));state.world.testGrantV4=true}}
+function normalize(){state={...structuredClone(defaultState),...state,family:{...defaultState.family,...(state.family||{})},subjects:state.subjects?.length?state.subjects:structuredClone(SUBJECTS),children:state.children||[],sets:state.sets||[],rewards:state.rewards||[],history:state.history||[]};if(!state.cardMigrationV6){let legacy=(state.collection||[]).filter(x=>x.unlocked).map(x=>x.id);if(state.children[0]&&legacy.length)state.children[0].cards=[...new Set([...(state.children[0].cards||[]),...legacy])];state.cardMigrationV6=true}state.collection=COLLECTION.map(b=>({...b}));state.children.forEach(c=>{c.cards=c.cards||[];c.mathEnabled=c.mathEnabled||[];c.mathProgress=c.mathProgress||{};c.funkelEnabled=c.funkelEnabled||[];c.funkelProgress=c.funkelProgress||{};c.sallyEnabled=c.sallyEnabled||[];c.sallyProgress=c.sallyProgress||{}})
+state.catalog=CATALOG.map(b=>({...b,...((state.catalog||[]).find(x=>x.id===b.id)||{})}));state.world={...structuredClone(defaultState.world),...(state.world||{}),placed:{...structuredClone(defaultState.world.placed),...(state.world?.placed||{})},positions:{...(state.world?.positions||{})}};if(!state.world.testGrantV4){state.children.forEach(c=>c.crystals=Math.max(c.crystals||0,1500));state.world.testGrantV4=true}}
 normalize();
-function saveLocal(){localStorage.setItem("mlw-v2",JSON.stringify(state))} function scheduleSync(){saveLocal();clearTimeout(syncTimer);syncTimer=setTimeout(pushCloud,500)}
+function saveLocal(){
+ try{
+  const old=localStorage.getItem("mlw-v2");
+  if(old)localStorage.setItem("mlw-v2-backup",old);
+  const protectedProfiles=(state.children||[]).map(c=>({id:c.id,name:c.name,stars:Number(c.stars||0),cards:[...(c.cards||[])]}));
+  localStorage.setItem("mlw-profile-vault",JSON.stringify({savedAt:now(),profiles:protectedProfiles}));
+ }catch(e){console.warn("Backup konnte nicht geschrieben werden",e)}
+ localStorage.setItem("mlw-v2",JSON.stringify(state))
+} function scheduleSync(){saveLocal();clearTimeout(syncTimer);syncTimer=setTimeout(pushCloud,500)}
 async function initCloud(){if(demo)return;try{const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const r=await supabase.auth.getSession();session=r.data.session;if(session)await pullCloud()}catch(e){console.warn(e)}}
 async function pullCloud(){if(!supabase||!session)return;const r=await supabase.from("app_state").select("payload").eq("user_id",session.user.id).maybeSingle();if(r.data?.payload){state={...structuredClone(defaultState),...r.data.payload};normalize();currentChild=state.children[0]?.id||null;saveLocal()}}
 async function pushCloud(){if(!supabase||!session)return;await supabase.from("app_state").upsert({user_id:session.user.id,payload:state,updated_at:now()},{onConflict:"user_id"})}
